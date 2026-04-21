@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      DATABASE_URL: "file:/app/data/lab.db"
+      HOSTNAME: "0.0.0.0"
+    cap_add:
+      - NET_RAW
+    restart: unless-stopped

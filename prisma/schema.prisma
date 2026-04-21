@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Device {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  location      String        @default("")
+  systemState   String        @default("閒置")
+  cpuInfo       String        @default("")
+  ramInfo       String        @default("")
+  storageInfo   String        @default("")
+  aocInfo       String        @default("")
+  ip            String        @default("")
+  bmcIp         String        @default("")
+  osStatus      String        @default("")
+  bmcVersion    String        @default("")
+  biosVersion   String        @default("")
+  operator      String        @default("")
+  borrowedBy    String        @default("")
+  borrowedSince DateTime?
+  borrowReason  String        @default("")
+  notes         String        @default("")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  reservations  Reservation[]
+  incidents     Incident[]
+}
+
+model Reservation {
+  id        Int      @id @default(autoincrement())
+  deviceId  Int
+  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  borrower  String
+  fromDate  DateTime
+  toDate    DateTime
+  reason    String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model Incident {
+  id          Int      @id @default(autoincrement())
+  deviceId    Int
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  title       String
+  description String   @default("")
+  occurredAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
