@@ -21,6 +21,7 @@ export interface Device {
   borrowedSince: string | null
   borrowUntil: string | null
   borrowReason: string
+  borrowDescription: string
   notes: string
   createdAt: string
   updatedAt: string

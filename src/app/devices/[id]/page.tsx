@@ -146,6 +146,7 @@ export default function DeviceDetail() {
         <div className="bg-white rounded-lg border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-900 mb-4">網路與韌體</h2>
           <dl className="grid grid-cols-2 gap-4">
+            {row('OS 狀態', device.osStatus)}
             <div>
               <dt className="text-xs text-gray-500">IP</dt>
               <dd className="flex items-center gap-2 mt-0.5">
@@ -156,6 +157,7 @@ export default function DeviceDetail() {
                 <PingBadge status={ipPing} />
               </dd>
             </div>
+            {row('BMC MAC', device.bmcMac)}
             <div>
               <dt className="text-xs text-gray-500">BMC IP</dt>
               <dd className="flex items-center gap-2 mt-0.5">
@@ -166,17 +168,15 @@ export default function DeviceDetail() {
                 <PingBadge status={bmcPing} />
               </dd>
             </div>
+            {row('BMC 版本', device.bmcVersion)}
+            {row('BIOS 版本', device.biosVersion)}
             {row('S/N', device.serialNumber)}
-            {row('BMC MAC', device.bmcMac)}
             <div>
               <dt className="text-xs text-gray-500">Unipassword</dt>
               <dd className="text-sm text-gray-900 mt-0.5">
                 <UnipasswordField value={device.unipassword} />
               </dd>
             </div>
-            {row('OS 狀態', device.osStatus)}
-            {row('BMC 版本', device.bmcVersion)}
-            {row('BIOS 版本', device.biosVersion)}
           </dl>
         </div>
 
@@ -195,7 +195,11 @@ export default function DeviceDetail() {
             {row('借用人', device.borrowedBy)}
             {row('借用日期', fmt(device.borrowedSince))}
             {row('借用期限', fmt(device.borrowUntil))}
-            {row('借用原因', device.borrowReason)}
+            {row('借用主旨', device.borrowReason)}
+            <div className="md:col-span-2">
+              <dt className="text-xs text-gray-500">細節描述</dt>
+              <dd className="text-sm text-gray-900 mt-0.5 whitespace-pre-wrap">{device.borrowDescription || '—'}</dd>
+            </div>
           </dl>
         </div>
       </div>

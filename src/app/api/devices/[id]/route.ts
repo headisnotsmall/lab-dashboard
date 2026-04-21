@@ -48,6 +48,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       borrowedSince: data.borrowedSince ? new Date(data.borrowedSince) : null,
       borrowUntil: data.borrowUntil ? new Date(data.borrowUntil) : null,
       borrowReason: data.borrowReason,
+      borrowDescription: data.borrowDescription,
       notes: data.notes,
     },
   })

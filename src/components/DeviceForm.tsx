@@ -12,6 +12,7 @@ const empty = {
   cpuInfo: '', ramInfo: '', storageInfo: '', gpuInfo: '', aocInfo: '',
   serialNumber: '', bmcMac: '', unipassword: '',
   ip: '', bmcIp: '', osStatus: '', bmcVersion: '', biosVersion: '',
+  borrowDescription: '',
   operator: '', borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
 }
 
@@ -121,14 +122,14 @@ export default function DeviceForm({ device }: Props) {
       <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
         <h2 className="font-semibold text-gray-900">網路與韌體</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {field('S/N', 'serialNumber', 'text', '序號')}
-          {field('BMC MAC', 'bmcMac', 'text', '例如：AA:BB:CC:DD:EE:FF')}
-          {field('Unipassword', 'unipassword', 'password')}
-          {field('IP', 'ip', 'text', '192.168.1.10')}
-          {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
           {field('OS 狀態', 'osStatus', 'text', '例如：Ubuntu 22.04')}
+          {field('IP', 'ip', 'text', '192.168.1.10')}
+          {field('BMC MAC', 'bmcMac', 'text', '例如：AA:BB:CC:DD:EE:FF')}
+          {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
           {field('BMC 版本', 'bmcVersion', 'text', '例如：2.1.0')}
           {field('BIOS 版本', 'biosVersion', 'text', '例如：3.4a')}
+          {field('S/N', 'serialNumber', 'text', '序號')}
+          {field('Unipassword', 'unipassword', 'password')}
         </div>
       </section>
 
@@ -139,7 +140,16 @@ export default function DeviceForm({ device }: Props) {
           {field('借用人', 'borrowedBy')}
           {field('借用日期', 'borrowedSince', 'date')}
           {field('借用期限', 'borrowUntil', 'date')}
-          {field('借用原因', 'borrowReason')}
+          {field('借用主旨', 'borrowReason', 'text', '例如：效能測試')}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">細節描述</label>
+            <textarea
+              value={(form as Record<string, unknown>)['borrowDescription'] as string}
+              onChange={e => set('borrowDescription', e.target.value)}
+              rows={2}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
       </section>
 

@@ -30,6 +30,7 @@ model Device {
   borrowedSince DateTime?
   borrowUntil   DateTime?
   borrowReason  String        @default("")
+  borrowDescription String    @default("")
   notes         String        @default("")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
