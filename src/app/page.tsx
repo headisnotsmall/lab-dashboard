@@ -53,6 +53,26 @@ const fmt = (d: string | null) => {
   return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
 }
 
+function BorrowUntilCell({ value }: { value: string | null }) {
+  if (!value) return <span className="text-gray-300">—</span>
+  const now = new Date()
+  const due = new Date(value)
+  const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return (
+    <span className="flex items-center gap-1">
+      <span className="text-red-600 text-sm font-medium">{fmt(value)}</span>
+      <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">逾期</span>
+    </span>
+  )
+  if (diffDays <= 3) return (
+    <span className="flex items-center gap-1">
+      <span className="text-orange-500 text-sm font-medium">{fmt(value)}</span>
+      <span className="text-xs bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full">即將到期</span>
+    </span>
+  )
+  return <span className="text-gray-600 text-sm">{fmt(value)}</span>
+}
+
 export default function Dashboard() {
   const [devices, setDevices] = useState<Device[]>([])
   const [states, setStates] = useState<string[]>([])
@@ -166,7 +186,7 @@ export default function Dashboard() {
                   <td className="px-4 py-3 font-mono text-gray-700 text-xs">{d.bmcIp || '—'}</td>
                   <td className="px-4 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
                   <td className="px-4 py-3 text-gray-600">{d.operator || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{fmt(d.borrowUntil)}</td>
+                  <td className="px-4 py-3"><BorrowUntilCell value={d.borrowUntil ?? null} /></td>
                   <td className="px-4 py-3 text-gray-500 max-w-[180px]">
                     <span className="block truncate">{d.borrowReason || '—'}</span>
                   </td>
