@@ -144,7 +144,6 @@ export default function Dashboard() {
               <tr className="text-left text-xs text-gray-500 uppercase tracking-wide bg-gray-50">
                 <th className="px-4 py-3 font-medium">設備名稱</th>
                 <th className="px-4 py-3 font-medium">狀態</th>
-                <th className="px-4 py-3 font-medium">位置</th>
                 <th className="px-4 py-3 font-medium">BMC IP</th>
                 <th className="px-4 py-3 font-medium">BMC狀態</th>
                 <th className="px-4 py-3 font-medium">操作人員</th>
@@ -160,13 +159,10 @@ export default function Dashboard() {
 
               {filtered.map(d => (
                 <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 max-w-[160px]">
-                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 break-words whitespace-pre-wrap">{d.name}</Link>
+                  <td className="px-4 py-3">
+                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">{d.name}</Link>
                   </td>
                   <td className="px-4 py-3"><StatusBadge state={d.systemState} /></td>
-                  <td className="px-4 py-3">
-                    <InlineLocation deviceId={d.id} value={d.location} onSaved={load} />
-                  </td>
                   <td className="px-4 py-3 font-mono text-gray-700 text-xs">{d.bmcIp || '—'}</td>
                   <td className="px-4 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
                   <td className="px-4 py-3 text-gray-600">{d.operator || '—'}</td>
