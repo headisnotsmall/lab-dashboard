@@ -2,8 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
 export async function GET() {
+  const now = new Date()
   const devices = await prisma.device.findMany({
     orderBy: { name: 'asc' },
+    include: {
+      reservations: {
+        where: { fromDate: { gte: now } },
+        orderBy: { fromDate: 'asc' },
+        take: 1,
+      },
+    },
   })
   return NextResponse.json(devices)
 }
@@ -18,6 +26,7 @@ export async function POST(request: NextRequest) {
       cpuInfo: data.cpuInfo ?? '',
       ramInfo: data.ramInfo ?? '',
       storageInfo: data.storageInfo ?? '',
+      gpuInfo: data.gpuInfo ?? '',
       aocInfo: data.aocInfo ?? '',
       ip: data.ip ?? '',
       bmcIp: data.bmcIp ?? '',
@@ -27,6 +36,7 @@ export async function POST(request: NextRequest) {
       operator: data.operator ?? '',
       borrowedBy: data.borrowedBy ?? '',
       borrowedSince: data.borrowedSince ? new Date(data.borrowedSince) : null,
+      borrowUntil: data.borrowUntil ? new Date(data.borrowUntil) : null,
       borrowReason: data.borrowReason ?? '',
       notes: data.notes ?? '',
     },

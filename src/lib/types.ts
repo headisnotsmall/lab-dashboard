@@ -6,6 +6,7 @@ export interface Device {
   cpuInfo: string
   ramInfo: string
   storageInfo: string
+  gpuInfo: string
   aocInfo: string
   ip: string
   bmcIp: string
@@ -15,10 +16,12 @@ export interface Device {
   operator: string
   borrowedBy: string
   borrowedSince: string | null
+  borrowUntil: string | null
   borrowReason: string
   notes: string
   createdAt: string
   updatedAt: string
+  nextReservation?: Reservation
   reservations?: Reservation[]
   incidents?: Incident[]
 }

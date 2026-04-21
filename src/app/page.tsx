@@ -109,12 +109,13 @@ export default function Dashboard() {
                 <th className="px-5 py-3 font-medium">BMC狀態</th>
                 <th className="px-5 py-3 font-medium">OS</th>
                 <th className="px-5 py-3 font-medium">操作人員</th>
+                <th className="px-5 py-3 font-medium">後續預約</th>
                 <th className="px-5 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={10} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
+                <tr><td colSpan={11} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
               )}
               {filtered.map(d => (
                 <tr key={d.id} className="hover:bg-gray-50">
@@ -129,6 +130,15 @@ export default function Dashboard() {
                   <td className="px-5 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
                   <td className="px-5 py-3 text-gray-600">{d.osStatus || '—'}</td>
                   <td className="px-5 py-3 text-gray-600">{d.operator || '—'}</td>
+                  <td className="px-5 py-3">
+                    {d.reservations && d.reservations[0] ? (
+                      <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                        {d.reservations[0].borrower}
+                      </span>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3">
                     <Link href={`/devices/${d.id}/edit`} className="text-gray-400 hover:text-gray-600 text-xs">編輯</Link>
                   </td>

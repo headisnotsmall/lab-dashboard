@@ -44,7 +44,14 @@ export default function DeviceDetail() {
 
   if (!device) return <div className="text-gray-400 py-10 text-center">載入中...</div>
 
-  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('zh-TW') : '—'
+  const fmt = (d: string | null) => {
+    if (!d) return '—'
+    const date = new Date(d)
+    const yyyy = date.getFullYear()
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    const dd = String(date.getDate()).padStart(2, '0')
+    return `${yyyy}/${mm}/${dd}`
+  }
 
   const row = (label: string, value: string) => (
     <div key={label}>
@@ -86,6 +93,7 @@ export default function DeviceDetail() {
           <h2 className="font-semibold text-gray-900 mb-4">硬體規格</h2>
           <dl className="grid grid-cols-2 gap-4">
             {row('CPU', device.cpuInfo)}
+            {row('GPU', device.gpuInfo)}
             {row('RAM', device.ramInfo)}
             {row('Storage', device.storageInfo)}
             {row('AOC', device.aocInfo)}
@@ -127,6 +135,7 @@ export default function DeviceDetail() {
             {row('當前操作人員', device.operator)}
             {row('借用人', device.borrowedBy)}
             {row('借用日期', fmt(device.borrowedSince))}
+            {row('借用期限', fmt(device.borrowUntil))}
             {row('借用原因', device.borrowReason)}
           </dl>
         </div>

@@ -15,6 +15,7 @@ model Device {
   cpuInfo       String        @default("")
   ramInfo       String        @default("")
   storageInfo   String        @default("")
+  gpuInfo       String        @default("")
   aocInfo       String        @default("")
   ip            String        @default("")
   bmcIp         String        @default("")
@@ -24,6 +25,7 @@ model Device {
   operator      String        @default("")
   borrowedBy    String        @default("")
   borrowedSince DateTime?
+  borrowUntil   DateTime?
   borrowReason  String        @default("")
   notes         String        @default("")
   createdAt     DateTime      @default(now())

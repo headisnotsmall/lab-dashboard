@@ -10,9 +10,9 @@ interface Props {
 
 const empty = {
   name: '', location: '', systemState: '閒置',
-  cpuInfo: '', ramInfo: '', storageInfo: '', aocInfo: '',
+  cpuInfo: '', ramInfo: '', storageInfo: '', gpuInfo: '', aocInfo: '',
   ip: '', bmcIp: '', osStatus: '', bmcVersion: '', biosVersion: '',
-  operator: '', borrowedBy: '', borrowedSince: '', borrowReason: '', notes: '',
+  operator: '', borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
 }
 
 export default function DeviceForm({ device }: Props) {
@@ -21,6 +21,7 @@ export default function DeviceForm({ device }: Props) {
     ...empty,
     ...device,
     borrowedSince: device?.borrowedSince ? device.borrowedSince.split('T')[0] : '',
+    borrowUntil: device?.borrowUntil ? device.borrowUntil.split('T')[0] : '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -36,7 +37,7 @@ export default function DeviceForm({ device }: Props) {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, borrowedSince: form.borrowedSince || null }),
+      body: JSON.stringify({ ...form, borrowedSince: form.borrowedSince || null, borrowUntil: form.borrowUntil || null }),
     })
     if (res.ok) {
       const d = await res.json()
@@ -107,6 +108,7 @@ export default function DeviceForm({ device }: Props) {
           {field('CPU', 'cpuInfo', 'text', '例如：Xeon Gold 6348 x2')}
           {field('RAM', 'ramInfo', 'text', '例如：256GB DDR4')}
           {field('Storage', 'storageInfo', 'text', '例如：2TB NVMe x4')}
+          {field('GPU', 'gpuInfo', 'text', '例如：H100 80GB x8')}
           {field('AOC / 擴充卡', 'aocInfo', 'text', '例如：ConnectX-6 100GbE')}
         </div>
       </section>
@@ -128,6 +130,7 @@ export default function DeviceForm({ device }: Props) {
           {field('當前操作人員', 'operator')}
           {field('借用人', 'borrowedBy')}
           {field('借用日期', 'borrowedSince', 'date')}
+          {field('借用期限', 'borrowUntil', 'date')}
           {field('借用原因', 'borrowReason')}
         </div>
       </section>
