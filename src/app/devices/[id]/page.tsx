@@ -11,6 +11,19 @@ import BorrowHistorySection from '@/components/BorrowHistorySection'
 
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
 
+function UnipasswordField({ value }: { value: string }) {
+  const [show, setShow] = useState(false)
+  if (!value) return <span className="text-gray-400">—</span>
+  return (
+    <span className="flex items-center gap-2">
+      <span className="font-mono">{show ? value : '••••••••'}</span>
+      <button onClick={() => setShow(s => !s)} className="text-xs text-blue-500 hover:text-blue-700">
+        {show ? '隱藏' : '顯示'}
+      </button>
+    </span>
+  )
+}
+
 export default function DeviceDetail() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -151,6 +164,14 @@ export default function DeviceDetail() {
                   <button onClick={() => ping(device.bmcIp, setBmcPing)} className="text-xs text-blue-500 hover:text-blue-700">ping</button>
                 )}
                 <PingBadge status={bmcPing} />
+              </dd>
+            </div>
+            {row('S/N', device.serialNumber)}
+            {row('BMC MAC', device.bmcMac)}
+            <div>
+              <dt className="text-xs text-gray-500">Unipassword</dt>
+              <dd className="text-sm text-gray-900 mt-0.5">
+                <UnipasswordField value={device.unipassword} />
               </dd>
             </div>
             {row('OS 狀態', device.osStatus)}

@@ -10,6 +10,7 @@ interface Props {
 const empty = {
   name: '', location: '', systemState: '閒置',
   cpuInfo: '', ramInfo: '', storageInfo: '', gpuInfo: '', aocInfo: '',
+  serialNumber: '', bmcMac: '', unipassword: '',
   ip: '', bmcIp: '', osStatus: '', bmcVersion: '', biosVersion: '',
   operator: '', borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
 }
@@ -120,6 +121,9 @@ export default function DeviceForm({ device }: Props) {
       <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
         <h2 className="font-semibold text-gray-900">網路與韌體</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {field('S/N', 'serialNumber', 'text', '序號')}
+          {field('BMC MAC', 'bmcMac', 'text', '例如：AA:BB:CC:DD:EE:FF')}
+          {field('Unipassword', 'unipassword', 'password')}
           {field('IP', 'ip', 'text', '192.168.1.10')}
           {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
           {field('OS 狀態', 'osStatus', 'text', '例如：Ubuntu 22.04')}

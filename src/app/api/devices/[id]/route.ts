@@ -13,6 +13,15 @@ export async function GET(_: NextRequest, { params }: { params: { id: string } }
   return NextResponse.json(device)
 }
 
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  const data = await request.json()
+  const device = await prisma.device.update({
+    where: { id: Number(params.id) },
+    data,
+  })
+  return NextResponse.json(device)
+}
+
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const data = await request.json()
   const device = await prisma.device.update({
@@ -26,6 +35,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       storageInfo: data.storageInfo,
       gpuInfo: data.gpuInfo,
       aocInfo: data.aocInfo,
+      serialNumber: data.serialNumber,
+      bmcMac: data.bmcMac,
+      unipassword: data.unipassword,
       ip: data.ip,
       bmcIp: data.bmcIp,
       osStatus: data.osStatus,

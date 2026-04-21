@@ -8,10 +8,20 @@ interface Props {
   onUpdate: () => void
 }
 
+const fmt = (d: string) => {
+  const date = new Date(d)
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${yyyy}/${mm}/${dd}`
+}
+
 export default function IncidentSection({ deviceId, incidents, onUpdate }: Props) {
   const [form, setForm] = useState({ title: '', description: '', occurredAt: '' })
   const [adding, setAdding] = useState(false)
   const [open, setOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editForm, setEditForm] = useState({ title: '', description: '', occurredAt: '' })
 
   async function add(e: React.FormEvent) {
     e.preventDefault()
@@ -27,18 +37,29 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
     onUpdate()
   }
 
+  function startEdit(inc: Incident) {
+    setEditingId(inc.id)
+    setEditForm({
+      title: inc.title,
+      description: inc.description,
+      occurredAt: inc.occurredAt ? new Date(inc.occurredAt).toISOString().slice(0, 16) : '',
+    })
+  }
+
+  async function saveEdit(id: number) {
+    await fetch(`/api/incidents/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm),
+    })
+    setEditingId(null)
+    onUpdate()
+  }
+
   async function remove(id: number) {
     if (!confirm('確定刪除此事件？')) return
     await fetch(`/api/incidents/${id}`, { method: 'DELETE' })
     onUpdate()
-  }
-
-  const fmt = (d: string) => {
-    const date = new Date(d)
-    const yyyy = date.getFullYear()
-    const mm = String(date.getMonth() + 1).padStart(2, '0')
-    const dd = String(date.getDate()).padStart(2, '0')
-    return `${yyyy}/${mm}/${dd}`
   }
 
   return (
@@ -71,13 +92,9 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
           </div>
           <div className="flex gap-2">
             <button type="submit" disabled={adding}
-              className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">
-              新增
-            </button>
+              className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">新增</button>
             <button type="button" onClick={() => setOpen(false)}
-              className="px-3 py-1.5 bg-white text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">
-              取消
-            </button>
+              className="px-3 py-1.5 bg-white text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">取消</button>
           </div>
         </form>
       )}
@@ -88,14 +105,34 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
         <div className="space-y-3">
           {incidents.map(inc => (
             <div key={inc.id} className="border-l-2 border-orange-300 pl-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{inc.title}</p>
-                  {inc.description && <p className="text-xs text-gray-500 mt-0.5">{inc.description}</p>}
-                  <p className="text-xs text-gray-400 mt-1">{fmt(inc.occurredAt)}</p>
+              {editingId === inc.id ? (
+                <div className="space-y-2">
+                  <input value={editForm.title} onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
+                  <textarea value={editForm.description} onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                    rows={2} className="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
+                  <input type="datetime-local" value={editForm.occurredAt} onChange={e => setEditForm(f => ({ ...f, occurredAt: e.target.value }))}
+                    className="w-full border border-gray-300 rounded px-2 py-1 text-sm" />
+                  <div className="flex gap-2">
+                    <button onClick={() => saveEdit(inc.id)}
+                      className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">儲存</button>
+                    <button onClick={() => setEditingId(null)}
+                      className="px-3 py-1 bg-white text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">取消</button>
+                  </div>
                 </div>
-                <button onClick={() => remove(inc.id)} className="text-red-400 hover:text-red-600 text-xs ml-2 shrink-0">刪除</button>
-              </div>
+              ) : (
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{inc.title}</p>
+                    {inc.description && <p className="text-xs text-gray-500 mt-0.5">{inc.description}</p>}
+                    <p className="text-xs text-gray-400 mt-1">{fmt(inc.occurredAt)}</p>
+                  </div>
+                  <div className="flex gap-2 ml-2 shrink-0">
+                    <button onClick={() => startEdit(inc)} className="text-blue-400 hover:text-blue-600 text-xs">編輯</button>
+                    <button onClick={() => remove(inc.id)} className="text-red-400 hover:text-red-600 text-xs">刪除</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

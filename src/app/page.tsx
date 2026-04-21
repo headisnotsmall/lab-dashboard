@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
 import StatusBadge from '@/components/StatusBadge'
@@ -7,6 +7,45 @@ import PingBadge from '@/components/PingBadge'
 
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
 type PingMap = Record<number, { bmc: PingStatus }>
+
+function InlineLocation({ deviceId, value, onSaved }: { deviceId: number; value: string; onSaved: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const [val, setVal] = useState(value)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  async function save() {
+    await fetch(`/api/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location: val }),
+    })
+    setEditing(false)
+    onSaved()
+  }
+
+  if (editing) return (
+    <input
+      ref={inputRef}
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onBlur={save}
+      onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+      className="border border-blue-400 rounded px-2 py-0.5 text-sm w-36 focus:outline-none focus:ring-1 focus:ring-blue-500"
+    />
+  )
+
+  return (
+    <span
+      onClick={() => { setVal(value); setEditing(true) }}
+      className="cursor-pointer hover:bg-blue-50 hover:text-blue-700 rounded px-1 py-0.5 text-gray-600 text-sm"
+      title="點擊編輯位置"
+    >
+      {value || <span className="text-gray-300">點擊新增</span>}
+    </span>
+  )
+}
 
 const fmt = (d: string | null) => {
   if (!d) return '—'
@@ -105,25 +144,29 @@ export default function Dashboard() {
               <tr className="text-left text-xs text-gray-500 uppercase tracking-wide bg-gray-50">
                 <th className="px-4 py-3 font-medium">設備名稱</th>
                 <th className="px-4 py-3 font-medium">狀態</th>
+                <th className="px-4 py-3 font-medium">位置</th>
                 <th className="px-4 py-3 font-medium">BMC IP</th>
                 <th className="px-4 py-3 font-medium">BMC狀態</th>
                 <th className="px-4 py-3 font-medium">操作人員</th>
                 <th className="px-4 py-3 font-medium">借用期限</th>
                 <th className="px-4 py-3 font-medium">使用原因</th>
                 <th className="px-4 py-3 font-medium">後續預約</th>
-                <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
                 <tr><td colSpan={9} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
               )}
+
               {filtered.map(d => (
                 <tr key={d.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 max-w-[160px]">
                     <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 break-words whitespace-pre-wrap">{d.name}</Link>
                   </td>
                   <td className="px-4 py-3"><StatusBadge state={d.systemState} /></td>
+                  <td className="px-4 py-3">
+                    <InlineLocation deviceId={d.id} value={d.location} onSaved={load} />
+                  </td>
                   <td className="px-4 py-3 font-mono text-gray-700 text-xs">{d.bmcIp || '—'}</td>
                   <td className="px-4 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
                   <td className="px-4 py-3 text-gray-600">{d.operator || '—'}</td>
@@ -139,9 +182,6 @@ export default function Dashboard() {
                     ) : (
                       <span className="text-gray-300 text-xs">—</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/devices/${d.id}/edit`} className="text-gray-400 hover:text-gray-600 text-xs">編輯</Link>
                   </td>
                 </tr>
               ))}

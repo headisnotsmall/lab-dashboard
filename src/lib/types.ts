@@ -10,6 +10,9 @@ export interface Device {
   aocInfo: string
   ip: string
   bmcIp: string
+  serialNumber: string
+  bmcMac: string
+  unipassword: string
   osStatus: string
   bmcVersion: string
   biosVersion: string
