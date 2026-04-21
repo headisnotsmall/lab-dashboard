@@ -26,6 +26,17 @@ export interface Device {
   incidents?: Incident[]
 }
 
+export interface BorrowHistory {
+  id: number
+  deviceId: number
+  borrower: string
+  operator: string
+  fromDate: string | null
+  toDate: string
+  reason: string
+  createdAt: string
+}
+
 export interface Reservation {
   id: number
   deviceId: number

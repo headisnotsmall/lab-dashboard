@@ -33,9 +33,13 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
     onUpdate()
   }
 
-  const fmt = (d: string) => new Date(d).toLocaleDateString('zh-TW', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  })
+  const fmt = (d: string) => {
+    const date = new Date(d)
+    const yyyy = date.getFullYear()
+    const mm = String(date.getMonth() + 1).padStart(2, '0')
+    const dd = String(date.getDate()).padStart(2, '0')
+    return `${yyyy}/${mm}/${dd}`
+  }
 
   return (
     <div>

@@ -7,6 +7,7 @@ import StatusBadge from '@/components/StatusBadge'
 import PingBadge from '@/components/PingBadge'
 import ReservationSection from '@/components/ReservationSection'
 import IncidentSection from '@/components/IncidentSection'
+import BorrowHistorySection from '@/components/BorrowHistorySection'
 
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
 
@@ -16,6 +17,7 @@ export default function DeviceDetail() {
   const [device, setDevice] = useState<Device | null>(null)
   const [ipPing, setIpPing] = useState<PingStatus>('unknown')
   const [bmcPing, setBmcPing] = useState<PingStatus>('unknown')
+  const [returning, setReturning] = useState(false)
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/devices/${id}`)
@@ -34,6 +36,34 @@ export default function DeviceDetail() {
     })
     const data = await res.json()
     set(data.online ? 'online' : 'offline')
+  }
+
+  async function returnDevice() {
+    if (!confirm('確定歸還此設備？借用資訊將存入紀錄並清空。')) return
+    setReturning(true)
+    const res = await fetch(`/api/devices/${id}/return`, { method: 'POST' })
+    const data = await res.json()
+    if (data.nextReservation) {
+      const activate = confirm(
+        `排程中有待接手的預約：${data.nextReservation.borrower}（${fmt(data.nextReservation.fromDate)}）\n是否立即設為當前借用人？`
+      )
+      if (activate) {
+        await fetch(`/api/devices/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...device,
+            borrowedBy: data.nextReservation.borrower,
+            borrowedSince: new Date().toISOString(),
+            borrowUntil: data.nextReservation.toDate,
+            borrowReason: data.nextReservation.reason,
+          }),
+        })
+        await fetch(`/api/reservations/${data.nextReservation.id}`, { method: 'DELETE' })
+      }
+    }
+    setReturning(false)
+    load()
   }
 
   async function deleteDevice() {
@@ -130,7 +160,15 @@ export default function DeviceDetail() {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">借用狀態</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">借用狀態</h2>
+            {device.borrowedBy && (
+              <button onClick={returnDevice} disabled={returning}
+                className="px-3 py-1 bg-green-50 text-green-700 text-xs rounded border border-green-200 hover:bg-green-100 disabled:opacity-50">
+                {returning ? '處理中...' : '歸還'}
+              </button>
+            )}
+          </div>
           <dl className="grid grid-cols-2 gap-4">
             {row('當前操作人員', device.operator)}
             {row('借用人', device.borrowedBy)}
@@ -147,6 +185,10 @@ export default function DeviceDetail() {
           reservations={device.reservations ?? []}
           onUpdate={load}
         />
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <BorrowHistorySection deviceId={device.id} />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5">
