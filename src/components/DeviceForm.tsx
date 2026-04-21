@@ -1,8 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Device } from '@/lib/types'
-import { SYSTEM_STATES } from '@/lib/constants'
 
 interface Props {
   device?: Device
@@ -17,6 +16,11 @@ const empty = {
 
 export default function DeviceForm({ device }: Props) {
   const router = useRouter()
+  const [states, setStates] = useState<string[]>([])
+  useEffect(() => {
+    fetch('/api/states').then(r => r.json()).then((data: { name: string }[]) => setStates(data.map(s => s.name)))
+  }, [])
+
   const [form, setForm] = useState({
     ...empty,
     ...device,
@@ -87,7 +91,7 @@ export default function DeviceForm({ device }: Props) {
               onChange={e => set('systemState', e.target.value)}
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {SYSTEM_STATES.map(s => <option key={s}>{s}</option>)}
+              {states.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div className="md:col-span-2">

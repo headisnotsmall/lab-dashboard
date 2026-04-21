@@ -35,6 +35,12 @@ model Device {
   borrowHistory BorrowHistory[]
 }
 
+model StateOption {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  order Int    @default(0)
+}
+
 model BorrowHistory {
   id        Int      @id @default(autoincrement())
   deviceId  Int

@@ -2,53 +2,56 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
-import { SYSTEM_STATES, STATE_STYLES, SystemState } from '@/lib/constants'
 import StatusBadge from '@/components/StatusBadge'
 import PingBadge from '@/components/PingBadge'
 
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
-type PingMap = Record<number, { ip: PingStatus; bmc: PingStatus }>
+type PingMap = Record<number, { bmc: PingStatus }>
+
+const fmt = (d: string | null) => {
+  if (!d) return '—'
+  const date = new Date(d)
+  return `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`
+}
 
 export default function Dashboard() {
   const [devices, setDevices] = useState<Device[]>([])
+  const [states, setStates] = useState<string[]>([])
   const [filter, setFilter] = useState('全部')
   const [search, setSearch] = useState('')
   const [pings, setPings] = useState<PingMap>({})
   const [pinging, setPinging] = useState(false)
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/devices')
-    setDevices(await res.json())
+    const [devRes, stateRes] = await Promise.all([fetch('/api/devices'), fetch('/api/states')])
+    const [devData, stateData] = await Promise.all([devRes.json(), stateRes.json()])
+    setDevices(devData)
+    setStates(stateData.map((s: { name: string }) => s.name))
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  async function pingOne(ip: string): Promise<PingStatus> {
-    if (!ip) return 'unknown'
-    const res = await fetch('/api/ping', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ip }),
-    })
-    const data = await res.json()
-    return data.online ? 'online' : 'offline'
-  }
-
   async function pingAll() {
     setPinging(true)
     const init: PingMap = {}
-    devices.forEach(d => { init[d.id] = { ip: d.ip ? 'checking' : 'unknown', bmc: d.bmcIp ? 'checking' : 'unknown' } })
+    devices.forEach(d => { init[d.id] = { bmc: d.bmcIp ? 'checking' : 'unknown' } })
     setPings(init)
     await Promise.all(
       devices.map(async d => {
-        const [ipStatus, bmcStatus] = await Promise.all([pingOne(d.ip), pingOne(d.bmcIp)])
-        setPings(p => ({ ...p, [d.id]: { ip: ipStatus, bmc: bmcStatus } }))
+        if (!d.bmcIp) return
+        const res = await fetch('/api/ping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip: d.bmcIp }),
+        })
+        const data = await res.json()
+        setPings(p => ({ ...p, [d.id]: { bmc: data.online ? 'online' : 'offline' } }))
       })
     )
     setPinging(false)
   }
 
-  const counts = SYSTEM_STATES.reduce((acc, s) => ({
+  const counts = states.reduce((acc, s) => ({
     ...acc,
     [s]: devices.filter(d => d.systemState === s).length,
   }), {} as Record<string, number>)
@@ -57,19 +60,19 @@ export default function Dashboard() {
     const matchState = filter === '全部' || d.systemState === filter
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
       d.operator.toLowerCase().includes(search.toLowerCase()) ||
-      d.ip.includes(search)
+      d.bmcIp.includes(search)
     return matchState && matchSearch
   })
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
+      <div className="flex flex-wrap gap-3">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 text-center min-w-[80px]">
           <div className="text-2xl font-bold text-gray-900">{devices.length}</div>
           <div className="text-xs text-gray-500 mt-1">總計</div>
         </div>
-        {SYSTEM_STATES.map(s => (
-          <div key={s} className="bg-white rounded-lg border border-gray-200 p-4 text-center cursor-pointer hover:border-blue-300"
+        {states.map(s => (
+          <div key={s} className={`bg-white rounded-lg border p-4 text-center min-w-[80px] cursor-pointer transition-colors ${filter === s ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-blue-300'}`}
             onClick={() => setFilter(filter === s ? '全部' : s)}>
             <div className="text-2xl font-bold text-gray-900">{counts[s] ?? 0}</div>
             <div className="mt-1"><StatusBadge state={s} /></div>
@@ -82,12 +85,12 @@ export default function Dashboard() {
           <select value={filter} onChange={e => setFilter(e.target.value)}
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
             <option>全部</option>
-            {SYSTEM_STATES.map(s => <option key={s}>{s}</option>)}
+            {states.map(s => <option key={s}>{s}</option>)}
           </select>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="搜尋名稱 / IP / 操作人"
+            placeholder="搜尋名稱 / BMC IP / 操作人"
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-60 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button onClick={pingAll} disabled={pinging || devices.length === 0}
@@ -100,37 +103,35 @@ export default function Dashboard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-500 uppercase tracking-wide bg-gray-50">
-                <th className="px-5 py-3 font-medium">設備名稱</th>
-                <th className="px-5 py-3 font-medium">狀態</th>
-                <th className="px-5 py-3 font-medium">位置</th>
-                <th className="px-5 py-3 font-medium">IP</th>
-                <th className="px-5 py-3 font-medium">IP狀態</th>
-                <th className="px-5 py-3 font-medium">BMC IP</th>
-                <th className="px-5 py-3 font-medium">BMC狀態</th>
-                <th className="px-5 py-3 font-medium">OS</th>
-                <th className="px-5 py-3 font-medium">操作人員</th>
-                <th className="px-5 py-3 font-medium">後續預約</th>
-                <th className="px-5 py-3 font-medium"></th>
+                <th className="px-4 py-3 font-medium">設備名稱</th>
+                <th className="px-4 py-3 font-medium">狀態</th>
+                <th className="px-4 py-3 font-medium">BMC IP</th>
+                <th className="px-4 py-3 font-medium">BMC狀態</th>
+                <th className="px-4 py-3 font-medium">操作人員</th>
+                <th className="px-4 py-3 font-medium">借用期限</th>
+                <th className="px-4 py-3 font-medium">使用原因</th>
+                <th className="px-4 py-3 font-medium">後續預約</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={11} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
+                <tr><td colSpan={9} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
               )}
               {filtered.map(d => (
                 <tr key={d.id} className="hover:bg-gray-50">
-                  <td className="px-5 py-3">
-                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700">{d.name}</Link>
+                  <td className="px-4 py-3 max-w-[160px]">
+                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 break-words whitespace-pre-wrap">{d.name}</Link>
                   </td>
-                  <td className="px-5 py-3"><StatusBadge state={d.systemState} /></td>
-                  <td className="px-5 py-3 text-gray-600">{d.location || '—'}</td>
-                  <td className="px-5 py-3 font-mono text-gray-700">{d.ip || '—'}</td>
-                  <td className="px-5 py-3"><PingBadge status={pings[d.id]?.ip ?? 'unknown'} /></td>
-                  <td className="px-5 py-3 font-mono text-gray-700">{d.bmcIp || '—'}</td>
-                  <td className="px-5 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
-                  <td className="px-5 py-3 text-gray-600">{d.osStatus || '—'}</td>
-                  <td className="px-5 py-3 text-gray-600">{d.operator || '—'}</td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3"><StatusBadge state={d.systemState} /></td>
+                  <td className="px-4 py-3 font-mono text-gray-700 text-xs">{d.bmcIp || '—'}</td>
+                  <td className="px-4 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
+                  <td className="px-4 py-3 text-gray-600">{d.operator || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{fmt(d.borrowUntil)}</td>
+                  <td className="px-4 py-3 text-gray-500 max-w-[180px]">
+                    <span className="block truncate">{d.borrowReason || '—'}</span>
+                  </td>
+                  <td className="px-4 py-3">
                     {d.reservations && d.reservations[0] ? (
                       <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
                         {d.reservations[0].borrower}
@@ -139,7 +140,7 @@ export default function Dashboard() {
                       <span className="text-gray-300 text-xs">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3">
                     <Link href={`/devices/${d.id}/edit`} className="text-gray-400 hover:text-gray-600 text-xs">編輯</Link>
                   </td>
                 </tr>
