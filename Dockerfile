@@ -6,6 +6,7 @@ RUN npm install
 COPY prisma ./prisma
 RUN npx prisma generate
 COPY . .
+RUN if [ -f bin/saa ]; then chmod +x bin/saa; fi
 RUN npm run build
 RUN cp -r .next/static .next/standalone/.next/static
 EXPOSE 3000

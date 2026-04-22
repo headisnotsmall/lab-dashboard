@@ -3,8 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { HardwareHistory } from '@/lib/types'
 
 const FIELD_LABELS: Record<string, string> = {
-  cpuInfo: 'CPU', ramInfo: 'RAM', gpuInfo: 'GPU', storageInfo: 'Storage',
-  aocInfo: 'AOC', bmcVersion: 'BMC 版本', biosVersion: 'BIOS 版本', osStatus: 'OS 狀態',
+  cpuInfo: 'CPU', ramInfo: 'RAM', bmcVersion: 'BMC 版本', biosVersion: 'BIOS 版本',
 }
 
 function NotesCell({ record, onSaved }: { record: HardwareHistory; onSaved: (id: number, notes: string) => void }) {
