@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import https from 'https'
 import { prisma } from '@/lib/db'
+import { logHardwareChanges } from '@/lib/hardware-history'
 
 function redfishGet(ip: string, path: string, password: string): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
@@ -106,6 +107,8 @@ export async function POST(
     if (bios) updates.biosVersion = bios
     if (bmc) updates.bmcVersion = bmc
     if (gpuInfo) updates.gpuInfo = gpuInfo
+
+    await logHardwareChanges(device.id, device as Record<string, string>, updates, 'redfish')
 
     await prisma.device.update({ where: { id: device.id }, data: updates })
 

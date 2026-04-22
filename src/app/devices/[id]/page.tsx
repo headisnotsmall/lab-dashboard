@@ -8,6 +8,7 @@ import PingBadge from '@/components/PingBadge'
 import ReservationSection from '@/components/ReservationSection'
 import IncidentSection from '@/components/IncidentSection'
 import BorrowHistorySection from '@/components/BorrowHistorySection'
+import HardwareHistorySection from '@/components/HardwareHistorySection'
 
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
 
@@ -214,6 +215,10 @@ export default function DeviceDetail() {
 
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <BorrowHistorySection deviceId={device.id} />
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <HardwareHistorySection deviceId={device.id} />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5">

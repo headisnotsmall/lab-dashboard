@@ -59,3 +59,14 @@ export interface Incident {
   occurredAt: string
   createdAt: string
 }
+
+export interface HardwareHistory {
+  id: number
+  deviceId: number
+  field: string
+  oldValue: string
+  newValue: string
+  source: string
+  notes: string
+  createdAt: string
+}

@@ -34,9 +34,10 @@ model Device {
   notes         String        @default("")
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
-  reservations  Reservation[]
-  incidents     Incident[]
-  borrowHistory BorrowHistory[]
+  reservations     Reservation[]
+  incidents        Incident[]
+  borrowHistory    BorrowHistory[]
+  hardwareHistory  HardwareHistory[]
 }
 
 model StateOption {
@@ -76,4 +77,16 @@ model Incident {
   description String   @default("")
   occurredAt  DateTime @default(now())
   createdAt   DateTime @default(now())
+}
+
+model HardwareHistory {
+  id        Int      @id @default(autoincrement())
+  deviceId  Int
+  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  field     String
+  oldValue  String   @default("")
+  newValue  String   @default("")
+  source    String   @default("manual")
+  notes     String   @default("")
+  createdAt DateTime @default(now())
 }
