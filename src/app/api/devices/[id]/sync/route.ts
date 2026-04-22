@@ -67,7 +67,7 @@ async function fetchGpuInfo(ip: string, password: string): Promise<string> {
     if (!gpus.length) return ''
 
     const names = gpus.map(d => d['Name'] as string).filter(Boolean)
-    const unique = [...new Set(names)]
+    const unique = Array.from(new Set(names))
     if (unique.length === 1) return `${unique[0]} x${gpus.length}`
     return unique.join(', ')
   } catch {
