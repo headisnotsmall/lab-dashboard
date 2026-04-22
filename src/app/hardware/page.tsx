@@ -187,7 +187,9 @@ export default function HardwarePage() {
                         </button>
                         {state === 'ok' && <span className="text-xs text-green-600">✓ 已更新</span>}
                         {state === 'error' && (
-                          <span className="text-xs text-red-500" title={syncError[d.id]}>✗ 失敗</span>
+                          <span className="text-xs text-red-500 max-w-[160px] block leading-tight">
+                            ✗ {syncError[d.id] || '失敗'}
+                          </span>
                         )}
                       </div>
                     )}

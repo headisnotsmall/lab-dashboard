@@ -9,3 +9,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   })
   return NextResponse.json(record)
 }
+
+export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+  await prisma.hardwareHistory.delete({ where: { id: Number(params.id) } })
+  return NextResponse.json({ ok: true })
+}

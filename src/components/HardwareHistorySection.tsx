@@ -75,6 +75,11 @@ export default function HardwareHistorySection({ deviceId }: { deviceId: number 
     setHistory(h => h.map(r => r.id === id ? { ...r, notes } : r))
   }
 
+  async function handleDelete(id: number) {
+    await fetch(`/api/hardware-history/${id}`, { method: 'DELETE' })
+    setHistory(h => h.filter(r => r.id !== id))
+  }
+
   if (loading) return null
 
   return (
@@ -92,7 +97,8 @@ export default function HardwareHistorySection({ deviceId }: { deviceId: number 
                 <th className="pb-2 font-medium pr-4">變更前</th>
                 <th className="pb-2 font-medium pr-4">變更後</th>
                 <th className="pb-2 font-medium pr-4">來源</th>
-                <th className="pb-2 font-medium">備註</th>
+                <th className="pb-2 font-medium pr-4">備註</th>
+                <th className="pb-2 font-medium"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -117,8 +123,17 @@ export default function HardwareHistorySection({ deviceId }: { deviceId: number 
                       {r.source === 'redfish' ? 'Redfish' : '手動'}
                     </span>
                   </td>
-                  <td className="py-2 min-w-[160px]">
+                  <td className="py-2 pr-4 min-w-[160px]">
                     <NotesCell record={r} onSaved={handleNotesSaved} />
+                  </td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => handleDelete(r.id)}
+                      className="text-xs text-gray-300 hover:text-red-500 px-1"
+                      title="刪除此紀錄"
+                    >
+                      ✕
+                    </button>
                   </td>
                 </tr>
               ))}
