@@ -15,15 +15,9 @@ const COLUMNS: { label: string; field: keyof Device }[] = [
 ]
 
 function InlineCell({
-  deviceId,
-  field,
-  value,
-  onSaved,
+  deviceId, field, value, onSaved,
 }: {
-  deviceId: number
-  field: string
-  value: string
-  onSaved: (field: string, value: string) => void
+  deviceId: number; field: string; value: string; onSaved: (field: string, value: string) => void
 }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value)
@@ -68,9 +62,14 @@ function InlineCell({
   )
 }
 
+type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
+
 export default function HardwarePage() {
   const [devices, setDevices] = useState<Device[]>([])
   const [search, setSearch] = useState('')
+  const [syncStates, setSyncStates] = useState<Record<number, SyncState>>({})
+  const [syncError, setSyncError] = useState<Record<number, string>>({})
+  const [syncingAll, setSyncingAll] = useState(false)
 
   const load = useCallback(async () => {
     const res = await fetch('/api/devices')
@@ -83,6 +82,29 @@ export default function HardwarePage() {
     setDevices(prev => prev.map(d => d.id === deviceId ? { ...d, [field]: val } : d))
   }
 
+  async function syncDevice(id: number) {
+    setSyncStates(s => ({ ...s, [id]: 'syncing' }))
+    setSyncError(e => { const n = { ...e }; delete n[id]; return n })
+    try {
+      const res = await fetch(`/api/devices/${id}/sync`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '同步失敗')
+      setDevices(prev => prev.map(d => d.id === id ? { ...d, ...data.updates } : d))
+      setSyncStates(s => ({ ...s, [id]: 'ok' }))
+      setTimeout(() => setSyncStates(s => ({ ...s, [id]: 'idle' })), 3000)
+    } catch (err) {
+      setSyncStates(s => ({ ...s, [id]: 'error' }))
+      setSyncError(e => ({ ...e, [id]: err instanceof Error ? err.message : '失敗' }))
+    }
+  }
+
+  async function syncAll() {
+    setSyncingAll(true)
+    const hasBmc = devices.filter(d => d.bmcIp)
+    await Promise.all(hasBmc.map(d => syncDevice(d.id)))
+    setSyncingAll(false)
+  }
+
   const filtered = devices.filter(d =>
     d.name.toLowerCase().includes(search.toLowerCase()) ||
     d.location.toLowerCase().includes(search.toLowerCase())
@@ -93,14 +115,23 @@ export default function HardwarePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-900">硬體管理</h1>
-          <p className="text-sm text-gray-500 mt-0.5">點擊格子即可直接編輯</p>
+          <p className="text-sm text-gray-500 mt-0.5">點擊格子直接編輯，或透過 Redfish 自動同步</p>
         </div>
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="搜尋設備名稱 / 位置"
-          className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="flex items-center gap-3">
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="搜尋設備名稱 / 位置"
+            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <button
+            onClick={syncAll}
+            disabled={syncingAll || devices.every(d => !d.bmcIp)}
+            className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+          >
+            {syncingAll ? '同步中...' : '全部同步'}
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
@@ -111,38 +142,59 @@ export default function HardwarePage() {
               {COLUMNS.map(c => (
                 <th key={c.field} className="px-4 py-3 font-medium whitespace-nowrap">{c.label}</th>
               ))}
+              <th className="px-4 py-3 font-medium">同步</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={COLUMNS.length + 1} className="px-5 py-10 text-center text-gray-400">
+                <td colSpan={COLUMNS.length + 2} className="px-5 py-10 text-center text-gray-400">
                   {devices.length === 0 ? '尚無設備' : '沒有符合的結果'}
                 </td>
               </tr>
             )}
-            {filtered.map(d => (
-              <tr key={d.id} className="hover:bg-gray-50 group">
-                <td className="px-4 py-2 sticky left-0 bg-white group-hover:bg-gray-50 z-10 border-r border-gray-100">
-                  <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap text-sm">
-                    {d.name}
-                  </Link>
-                  {d.location && (
-                    <div className="text-xs text-gray-400 mt-0.5">{d.location}</div>
-                  )}
-                </td>
-                {COLUMNS.map(c => (
-                  <td key={c.field} className="px-3 py-2">
-                    <InlineCell
-                      deviceId={d.id}
-                      field={c.field}
-                      value={d[c.field] as string}
-                      onSaved={(field, val) => handleSaved(d.id, field, val)}
-                    />
+            {filtered.map(d => {
+              const state = syncStates[d.id] ?? 'idle'
+              return (
+                <tr key={d.id} className="hover:bg-gray-50 group">
+                  <td className="px-4 py-2 sticky left-0 bg-white group-hover:bg-gray-50 z-10 border-r border-gray-100">
+                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap text-sm">
+                      {d.name}
+                    </Link>
+                    {d.location && <div className="text-xs text-gray-400 mt-0.5">{d.location}</div>}
                   </td>
-                ))}
-              </tr>
-            ))}
+                  {COLUMNS.map(c => (
+                    <td key={c.field} className="px-3 py-2">
+                      <InlineCell
+                        deviceId={d.id}
+                        field={c.field}
+                        value={d[c.field] as string}
+                        onSaved={(field, val) => handleSaved(d.id, field, val)}
+                      />
+                    </td>
+                  ))}
+                  <td className="px-3 py-2">
+                    {!d.bmcIp ? (
+                      <span className="text-xs text-gray-300">無 BMC IP</span>
+                    ) : (
+                      <div className="flex flex-col items-start gap-0.5">
+                        <button
+                          onClick={() => syncDevice(d.id)}
+                          disabled={state === 'syncing'}
+                          className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          {state === 'syncing' ? '同步中...' : '同步'}
+                        </button>
+                        {state === 'ok' && <span className="text-xs text-green-600">✓ 已更新</span>}
+                        {state === 'error' && (
+                          <span className="text-xs text-red-500" title={syncError[d.id]}>✗ 失敗</span>
+                        )}
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
