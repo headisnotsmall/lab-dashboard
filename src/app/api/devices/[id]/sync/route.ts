@@ -108,7 +108,7 @@ export async function POST(
     if (bmc) updates.bmcVersion = bmc
     if (gpuInfo) updates.gpuInfo = gpuInfo
 
-    await logHardwareChanges(device.id, device as Record<string, string>, updates, 'redfish')
+    await logHardwareChanges(device.id, device as Record<string, unknown>, updates, 'redfish')
 
     await prisma.device.update({ where: { id: device.id }, data: updates })
 

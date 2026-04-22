@@ -23,7 +23,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
   const device = await prisma.device.update({ where: { id }, data })
 
-  await logHardwareChanges(id, current as Record<string, string>, data)
+  await logHardwareChanges(id, current as Record<string, unknown>, data)
 
   return NextResponse.json(device)
 }
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   const device = await prisma.device.update({ where: { id }, data: updateData })
 
-  await logHardwareChanges(id, current as Record<string, string>, data)
+  await logHardwareChanges(id, current as Record<string, unknown>, data)
 
   return NextResponse.json(device)
 }

@@ -9,17 +9,17 @@ export type HardwareField = typeof HARDWARE_FIELDS[number]
 
 export async function logHardwareChanges(
   deviceId: number,
-  oldValues: Record<string, string>,
-  newValues: Record<string, string>,
+  oldValues: Record<string, unknown>,
+  newValues: Record<string, unknown>,
   source: 'manual' | 'redfish' = 'manual'
 ) {
   const records = HARDWARE_FIELDS
-    .filter(f => newValues[f] !== undefined && newValues[f] !== oldValues[f])
+    .filter(f => newValues[f] !== undefined && String(newValues[f]) !== String(oldValues[f] ?? ''))
     .map(f => ({
       deviceId,
       field: f,
-      oldValue: oldValues[f] ?? '',
-      newValue: newValues[f],
+      oldValue: String(oldValues[f] ?? ''),
+      newValue: String(newValues[f]),
       source,
     }))
 
