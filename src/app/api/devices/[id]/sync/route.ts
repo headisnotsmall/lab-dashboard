@@ -11,7 +11,7 @@ async function runSaa(bmcIp: string, command: string): Promise<string> {
   const { stdout, stderr } = await execFileAsync(
     SAA_PATH,
     ['-i', bmcIp, '-u', 'ADMIN', '-p', 'ADMIN', '-c', command],
-    { timeout: 60000 }
+    { timeout: 120000 }
   )
   if (stderr) console.error(`saa stderr [${command}]:`, stderr)
   return stdout
