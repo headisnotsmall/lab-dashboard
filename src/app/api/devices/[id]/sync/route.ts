@@ -20,8 +20,19 @@ function redfishGet(ip: string, path: string, password: string): Promise<Record<
       let data = ''
       res.on('data', chunk => data += chunk)
       res.on('end', () => {
-        try { resolve(JSON.parse(data)) }
-        catch { reject(new Error('Invalid JSON')) }
+        try {
+          const json = JSON.parse(data)
+          if (res.statusCode && res.statusCode >= 400) {
+            const msg = json?.error?.['@Message.ExtendedInfo']?.[0]?.Message
+              || json?.error?.message
+              || `HTTP ${res.statusCode}`
+            reject(new Error(msg))
+          } else {
+            resolve(json)
+          }
+        } catch {
+          reject(new Error(`HTTP ${res.statusCode} - Invalid JSON`))
+        }
       })
     })
     req.on('timeout', () => { req.destroy(); reject(new Error('連線逾時')) })
