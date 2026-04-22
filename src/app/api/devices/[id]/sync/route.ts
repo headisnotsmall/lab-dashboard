@@ -152,7 +152,7 @@ export async function POST(
     return NextResponse.json({ error: '此設備沒有設定 BMC IP' }, { status: 400 })
   }
 
-  const password = device.unipassword || 'ADMIN'
+  const password = 'ADMIN'
 
   try {
     const [system, manager, cpuInfo, ramInfo, gpuInfo] = await Promise.all([
