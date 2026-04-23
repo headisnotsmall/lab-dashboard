@@ -33,6 +33,22 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
     onUpdate()
   }
 
+  async function activate(r: Reservation) {
+    if (!confirm(`確定將 ${r.borrower} 的預約推送為當前借用狀態？`)) return
+    await fetch(`/api/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        borrowedBy: r.borrower,
+        borrowedSince: new Date().toISOString(),
+        borrowUntil: new Date(r.toDate).toISOString(),
+        borrowReason: r.reason,
+      }),
+    })
+    await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' })
+    onUpdate()
+  }
+
   const fmt = (d: string) => {
     const date = new Date(d)
     const yyyy = date.getFullYear()
@@ -101,7 +117,10 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
                 <span className="text-xs text-gray-500 ml-2">{fmt(r.fromDate)} ~ {fmt(r.toDate)}</span>
                 {r.reason && <span className="text-xs text-gray-400 ml-2">— {r.reason}</span>}
               </div>
-              <button onClick={() => remove(r.id)} className="text-red-400 hover:text-red-600 text-xs">刪除</button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => activate(r)} className="text-blue-500 hover:text-blue-700 text-xs">推送</button>
+                <button onClick={() => remove(r.id)} className="text-red-400 hover:text-red-600 text-xs">刪除</button>
+              </div>
             </div>
           ))}
         </div>

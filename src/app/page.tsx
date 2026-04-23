@@ -197,9 +197,14 @@ export default function Dashboard() {
                   </td>
                   <td className="px-4 py-3">
                     {d.reservations && d.reservations[0] ? (
-                      <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                        {d.reservations[0].borrower}
-                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full w-fit">
+                          {d.reservations[0].borrower}
+                        </span>
+                        <span className="text-xs text-gray-400 pl-1">
+                          {fmt(d.reservations[0].toDate)}
+                        </span>
+                      </div>
                     ) : (
                       <span className="text-gray-300 text-xs">—</span>
                     )}

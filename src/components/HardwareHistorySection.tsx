@@ -3,14 +3,12 @@ import { useEffect, useState, useRef } from 'react'
 import { HardwareHistory } from '@/lib/types'
 
 const FIELD_LABELS: Record<string, string> = {
-  name: '設備名稱', location: '位置', systemState: '系統狀態',
   cpuInfo: 'CPU', ramInfo: 'RAM', storageInfo: 'Storage', gpuInfo: 'GPU', aocInfo: 'AOC',
   serialNumber: 'S/N', bmcMac: 'BMC MAC', ip: 'IP', bmcIp: 'BMC IP',
   osStatus: 'OS 狀態', bmcVersion: 'BMC 版本', biosVersion: 'BIOS 版本',
-  pmName: '負責 PM', seName: '負責 SE',
-  operator: '操作人員', borrowedBy: '借用人',
-  borrowReason: '借用主旨', borrowDescription: '細節描述', notes: '備註',
 }
+
+const TRACKED_FIELDS = new Set(Object.keys(FIELD_LABELS))
 
 function NotesCell({ record, onSaved }: { record: HardwareHistory; onSaved: (id: number, notes: string) => void }) {
   const [editing, setEditing] = useState(false)
@@ -73,7 +71,7 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
   useEffect(() => {
     fetch(`/api/devices/${deviceId}/hardware-history`)
       .then(r => r.json())
-      .then(data => { setHistory(data); setLoading(false) })
+      .then(data => { setHistory(data.filter((r: HardwareHistory) => TRACKED_FIELDS.has(r.field))); setLoading(false) })
   }, [deviceId, refreshKey])
 
   function handleNotesSaved(id: number, notes: string) {

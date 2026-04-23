@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
@@ -14,6 +14,15 @@ import SyncLogSection from '@/components/SyncLogSection'
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
 type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
 
+const fmt = (d: string | null) => {
+  if (!d) return '—'
+  const date = new Date(d)
+  const yyyy = date.getFullYear()
+  const mm = String(date.getMonth() + 1).padStart(2, '0')
+  const dd = String(date.getDate()).padStart(2, '0')
+  return `${yyyy}/${mm}/${dd}`
+}
+
 function UnipasswordField({ value }: { value: string }) {
   const [show, setShow] = useState(false)
   if (!value) return <span className="text-gray-400">—</span>
@@ -23,6 +32,57 @@ function UnipasswordField({ value }: { value: string }) {
       <button onClick={() => setShow(s => !s)} className="text-xs text-blue-500 hover:text-blue-700">
         {show ? '隱藏' : '顯示'}
       </button>
+    </span>
+  )
+}
+
+function InlineField({
+  deviceId, field, value, type = 'text', mono, onSaved,
+}: {
+  deviceId: number; field: string; value: string | null; type?: 'text' | 'date'; mono?: boolean; onSaved: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [val, setVal] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
+
+  function startEdit() {
+    setVal(type === 'date' && value ? value.slice(0, 10) : (value || ''))
+    setEditing(true)
+  }
+
+  async function save() {
+    let sendVal: string | null = val || null
+    if (type === 'date' && val) sendVal = new Date(val).toISOString()
+    await fetch(`/api/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: sendVal }),
+    })
+    setEditing(false)
+    onSaved()
+  }
+
+  if (editing) return (
+    <input
+      ref={inputRef}
+      type={type}
+      value={val}
+      onChange={e => setVal(e.target.value)}
+      onBlur={save}
+      onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false) }}
+      className="border border-blue-400 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+    />
+  )
+
+  return (
+    <span
+      onClick={startEdit}
+      className={`cursor-pointer hover:bg-blue-50 hover:text-blue-700 rounded px-1 -mx-1 py-0.5 text-sm text-gray-900 ${mono ? 'font-mono' : ''}`}
+      title="點擊編輯"
+    >
+      {type === 'date' ? fmt(value) : (value || <span className="text-gray-400">—</span>)}
     </span>
   )
 }
@@ -113,15 +173,6 @@ export default function DeviceDetail() {
 
   if (!device) return <div className="text-gray-400 py-10 text-center">載入中...</div>
 
-  const fmt = (d: string | null) => {
-    if (!d) return '—'
-    const date = new Date(d)
-    const yyyy = date.getFullYear()
-    const mm = String(date.getMonth() + 1).padStart(2, '0')
-    const dd = String(date.getDate()).padStart(2, '0')
-    return `${yyyy}/${mm}/${dd}`
-  }
-
   const row = (label: string, value: string) => (
     <div key={label}>
       <dt className="text-xs text-gray-500">{label}</dt>
@@ -208,7 +259,7 @@ export default function DeviceDetail() {
             <div>
               <dt className="text-xs text-gray-500">BMC IP</dt>
               <dd className="flex items-center gap-2 mt-0.5">
-                <span className="text-sm font-mono text-gray-900">{device.bmcIp || '—'}</span>
+                <InlineField deviceId={device.id} field="bmcIp" value={device.bmcIp} mono onSaved={load} />
                 {device.bmcIp && (
                   <button onClick={() => ping(device.bmcIp, setBmcPing)} className="text-xs text-blue-500 hover:text-blue-700">ping</button>
                 )}
@@ -238,14 +289,21 @@ export default function DeviceDetail() {
             )}
           </div>
           <dl className="grid grid-cols-2 gap-4">
-            {row('當前操作人員', device.operator)}
-            {row('借用人', device.borrowedBy)}
-            {row('借用日期', fmt(device.borrowedSince))}
-            {row('借用期限', fmt(device.borrowUntil))}
-            {row('借用主旨', device.borrowReason)}
-            <div className="md:col-span-2">
-              <dt className="text-xs text-gray-500">細節描述</dt>
-              <dd className="text-sm text-gray-900 mt-0.5 whitespace-pre-wrap">{device.borrowDescription || '—'}</dd>
+            <div>
+              <dt className="text-xs text-gray-500">借用人</dt>
+              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowedBy" value={device.borrowedBy} onSaved={load} /></dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-500">借用日期</dt>
+              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowedSince" value={device.borrowedSince} type="date" onSaved={load} /></dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-500">借用主旨</dt>
+              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowReason" value={device.borrowReason} onSaved={load} /></dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-500">借用期限</dt>
+              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowUntil" value={device.borrowUntil} type="date" onSaved={load} /></dd>
             </div>
           </dl>
         </div>
