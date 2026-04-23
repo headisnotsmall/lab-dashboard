@@ -88,7 +88,7 @@ function parseSerialNumber(output: string): string {
   // Under "System" section
   const sysSection = output.match(/^System\s*={3,}([\s\S]*?)(?=\n[A-Z][^\n]+\n={3,})/m)
   if (!sysSection) return ''
-  const m = sysSection[1].match(/Serial Number:\s*(\S+)/)
+  const m = sysSection[1].match(/Serial Number:[^\S\n]*(\S+)/)
   return m ? m[1].trim() : ''
 }
 
