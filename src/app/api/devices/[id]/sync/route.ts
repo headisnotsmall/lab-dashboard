@@ -32,19 +32,21 @@ function parseCpu(output: string): string {
 function parseRam(output: string): string {
   const blocks = output.match(/\[MEM\(\d+\)\]([\s\S]*?)(?=\[MEM\(|Add-on|$)/g) || []
 
-  interface Dimm { sizeGB: number; type: string; moduleType: string; manufacturer: string }
+  interface Dimm { sizeGB: number; type: string; moduleType: string; speed: string; manufacturer: string }
   const dimms: Dimm[] = blocks
     .filter(b => !b.includes('N/A'))
     .map(b => {
       const sizeMB = b.match(/Size:\s+(\d+)\s+MB/)
       const type = b.match(/Device Type:\s+(\S+)/)
       const mod = b.match(/Module Type:\s+(\S+)/)
+      const spd = b.match(/(?:Configured (?:Memory |Clock )?)?Speed:\s+(\d+)\s*(MT\/s|MHz)/)
       const mfr = b.match(/Manufacturer:\s+(.+)/)
       if (!sizeMB || !type) return null
       return {
         sizeGB: Math.round(parseInt(sizeMB[1]) / 1024),
         type: type[1],
         moduleType: mod?.[1]?.trim() || '',
+        speed: spd ? `${spd[1]}${spd[2]}` : '',
         manufacturer: mfr?.[1]?.trim() || '',
       }
     })
@@ -55,7 +57,7 @@ function parseRam(output: string): string {
   const groups: Record<string, number> = {}
   let totalGB = 0
   for (const d of dimms) {
-    const key = `${d.sizeGB}GB ${d.type}${d.moduleType ? ` ${d.moduleType}` : ''}${d.manufacturer ? ` (${d.manufacturer})` : ''}`
+    const key = `${d.sizeGB}GB ${d.type}${d.moduleType ? ` ${d.moduleType}` : ''}${d.speed ? ` ${d.speed}` : ''}${d.manufacturer ? ` (${d.manufacturer})` : ''}`
     groups[key] = (groups[key] || 0) + 1
     totalGB += d.sizeGB
   }

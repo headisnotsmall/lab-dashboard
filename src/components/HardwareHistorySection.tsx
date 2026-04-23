@@ -3,7 +3,13 @@ import { useEffect, useState, useRef } from 'react'
 import { HardwareHistory } from '@/lib/types'
 
 const FIELD_LABELS: Record<string, string> = {
-  cpuInfo: 'CPU', ramInfo: 'RAM', bmcVersion: 'BMC 版本', biosVersion: 'BIOS 版本',
+  name: '設備名稱', location: '位置', systemState: '系統狀態',
+  cpuInfo: 'CPU', ramInfo: 'RAM', storageInfo: 'Storage', gpuInfo: 'GPU', aocInfo: 'AOC',
+  serialNumber: 'S/N', bmcMac: 'BMC MAC', ip: 'IP', bmcIp: 'BMC IP',
+  osStatus: 'OS 狀態', bmcVersion: 'BMC 版本', biosVersion: 'BIOS 版本',
+  pmName: '負責 PM', seName: '負責 SE',
+  operator: '操作人員', borrowedBy: '借用人',
+  borrowReason: '借用主旨', borrowDescription: '細節描述', notes: '備註',
 }
 
 function NotesCell({ record, onSaved }: { record: HardwareHistory; onSaved: (id: number, notes: string) => void }) {
@@ -83,7 +89,7 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
 
   return (
     <div>
-      <h2 className="font-semibold text-gray-900 mb-4">硬體變更紀錄</h2>
+      <h2 className="font-semibold text-gray-900 mb-4">系統資料更新紀錄</h2>
       {history.length === 0 ? (
         <p className="text-sm text-gray-400">尚無變更紀錄</p>
       ) : (

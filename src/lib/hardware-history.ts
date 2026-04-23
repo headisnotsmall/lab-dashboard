@@ -1,7 +1,11 @@
 import { prisma } from './db'
 
 export const HARDWARE_FIELDS = [
-  'cpuInfo', 'ramInfo', 'bmcVersion', 'biosVersion',
+  'name', 'location', 'systemState',
+  'cpuInfo', 'ramInfo', 'storageInfo', 'gpuInfo', 'aocInfo',
+  'serialNumber', 'bmcMac', 'ip', 'bmcIp', 'osStatus', 'bmcVersion', 'biosVersion',
+  'pmName', 'seName',
+  'operator', 'borrowedBy', 'borrowReason', 'borrowDescription', 'notes',
 ] as const
 
 export type HardwareField = typeof HARDWARE_FIELDS[number]
