@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
 
-const COLUMNS: { label: string; field: keyof Device }[] = [
+const ALL_COLUMNS: { label: string; field: keyof Device }[] = [
   { label: 'CPU',      field: 'cpuInfo' },
   { label: 'RAM',      field: 'ramInfo' },
   { label: 'GPU',      field: 'gpuInfo' },
@@ -12,7 +12,23 @@ const COLUMNS: { label: string; field: keyof Device }[] = [
   { label: 'OS',       field: 'osStatus' },
   { label: 'BMC 版本', field: 'bmcVersion' },
   { label: 'BIOS 版本',field: 'biosVersion' },
+  { label: 'S/N',      field: 'serialNumber' },
+  { label: 'BMC MAC',  field: 'bmcMac' },
+  { label: 'BMC IP',   field: 'bmcIp' },
+  { label: '負責 PM',  field: 'pmName' },
+  { label: '負責 SE',  field: 'seName' },
 ]
+
+const STORAGE_KEY = 'hardware-page-columns'
+const DEFAULT_FIELDS = ['cpuInfo', 'ramInfo', 'gpuInfo', 'storageInfo', 'aocInfo', 'osStatus', 'bmcVersion', 'biosVersion']
+
+function loadSavedFields(): Set<string> {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (raw) return new Set(JSON.parse(raw))
+  } catch { /* ignore */ }
+  return new Set(DEFAULT_FIELDS)
+}
 
 function InlineCell({
   deviceId, field, value, onSaved,
@@ -70,6 +86,34 @@ export default function HardwarePage() {
   const [syncStates, setSyncStates] = useState<Record<number, SyncState>>({})
   const [syncError, setSyncError] = useState<Record<number, string>>({})
   const [syncingAll, setSyncingAll] = useState(false)
+  const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(DEFAULT_FIELDS))
+  const [colMenuOpen, setColMenuOpen] = useState(false)
+  const colMenuRef = useRef<HTMLDivElement>(null)
+
+  // Load saved column selection after mount (localStorage not available during SSR)
+  useEffect(() => { setVisibleFields(loadSavedFields()) }, [])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (colMenuRef.current && !colMenuRef.current.contains(e.target as Node)) {
+        setColMenuOpen(false)
+      }
+    }
+    if (colMenuOpen) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [colMenuOpen])
+
+  function toggleField(field: string) {
+    setVisibleFields(prev => {
+      const next = new Set(prev)
+      next.has(field) ? next.delete(field) : next.add(field)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(next)))
+      return next
+    })
+  }
+
+  const COLUMNS = ALL_COLUMNS.filter(c => visibleFields.has(c.field))
 
   const load = useCallback(async () => {
     const res = await fetch('/api/devices')
@@ -124,6 +168,30 @@ export default function HardwarePage() {
             placeholder="搜尋設備名稱 / 位置"
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
+          {/* Column selector */}
+          <div className="relative" ref={colMenuRef}>
+            <button
+              onClick={() => setColMenuOpen(o => !o)}
+              className="px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-300 hover:bg-gray-50 whitespace-nowrap"
+            >
+              欄位 {colMenuOpen ? '▲' : '▼'}
+            </button>
+            {colMenuOpen && (
+              <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+                {ALL_COLUMNS.map(c => (
+                  <label key={c.field} className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 cursor-pointer text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={visibleFields.has(c.field)}
+                      onChange={() => toggleField(c.field)}
+                      className="rounded"
+                    />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             onClick={syncAll}
             disabled={syncingAll || devices.every(d => !d.bmcIp)}
