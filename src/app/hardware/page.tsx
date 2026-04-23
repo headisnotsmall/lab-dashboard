@@ -115,7 +115,7 @@ export default function HardwarePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-900">硬體管理</h1>
-          <p className="text-sm text-gray-500 mt-0.5">點擊格子直接編輯，或透過 Redfish 自動同步</p>
+          <p className="text-sm text-gray-500 mt-0.5">點擊格子直接編輯，或透過 SAA 自動同步</p>
         </div>
         <div className="flex items-center gap-3">
           <input

@@ -115,11 +115,11 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
                   </td>
                   <td className="py-2 pr-4">
                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                      r.source === 'redfish'
+                      r.source === 'saa'
                         ? 'bg-blue-50 text-blue-700'
                         : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {r.source === 'redfish' ? 'Redfish' : '手動'}
+                      {r.source === 'saa' ? 'SAA' : '手動'}
                     </span>
                   </td>
                   <td className="py-2 pr-4 min-w-[160px]">
