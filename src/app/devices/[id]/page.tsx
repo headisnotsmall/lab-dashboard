@@ -153,9 +153,9 @@ export default function DeviceDetail() {
         <div className="bg-white rounded-lg border border-gray-200 p-5">
           <h2 className="font-semibold text-gray-900 mb-4">基本資訊</h2>
           <dl className="grid grid-cols-2 gap-4">
-            {row('位置', device.location)}
             {row('負責 PM', device.pmName)}
             {row('負責 SE', device.seName)}
+            {row('位置', device.location)}
             {row('備註', device.notes)}
           </dl>
         </div>
