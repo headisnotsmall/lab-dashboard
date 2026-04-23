@@ -93,15 +93,16 @@ function parseSerialNumber(output: string): string {
 }
 
 function parseGpuInfo(output: string): string {
-  const lines = output.split('\n')
-  const gpus: string[] = []
-  for (const line of lines) {
-    const m = line.match(/GPU\[\d+\].*?:\s*(.+)/)
-    if (m) gpus.push(m[1].trim())
-  }
-  if (!gpus.length) return ''
-  const unique = Array.from(new Set(gpus))
-  return unique.length === 1 ? `${unique[0]} x${gpus.length}` : unique.join(', ')
+  // Output format: [GPU N] section headers with "Model : ..." on the next lines
+  const blocks = output.match(/\[GPU\s+\d+\]([\s\S]*?)(?=\n\[|$)/g) || []
+  const models = blocks
+    .map(b => { const m = b.match(/^\s*Model\s*:\s*(.+)/m); return m ? m[1].trim() : null })
+    .filter((v): v is string => !!v)
+  if (!models.length) return ''
+  const unique = Array.from(new Set(models))
+  return unique.length === 1 && models.length > 1
+    ? `${unique[0]} x${models.length}`
+    : unique[0] || ''
 }
 
 async function writeSyncLog(deviceId: number, status: string, fields: string[], errorMessage = '') {
