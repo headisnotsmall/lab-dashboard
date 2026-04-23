@@ -104,6 +104,26 @@ function parseGpuInfo(output: string): string {
   return unique.length === 1 ? `${unique[0]} x${gpus.length}` : unique.join(', ')
 }
 
+async function writeSyncLog(deviceId: number, status: string, fields: string[], errorMessage = '') {
+  try {
+    await prisma.syncLog.create({
+      data: { deviceId, status, updatedFields: JSON.stringify(fields), errorMessage },
+    })
+    // Keep last 50 per device
+    const old = await prisma.syncLog.findMany({
+      where: { deviceId },
+      orderBy: { createdAt: 'desc' },
+      skip: 50,
+      select: { id: true },
+    })
+    if (old.length > 0) {
+      await prisma.syncLog.deleteMany({ where: { id: { in: old.map(r => r.id) } } })
+    }
+  } catch (e) {
+    console.error('writeSyncLog failed:', e)
+  }
+}
+
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -141,10 +161,12 @@ export async function POST(
 
     await logHardwareChanges(device.id, device as Record<string, unknown>, updates, 'redfish')
     await prisma.device.update({ where: { id: device.id }, data: updates })
+    await writeSyncLog(device.id, 'success', Object.keys(updates))
 
     return NextResponse.json({ ok: true, updates })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
+    await writeSyncLog(device.id, 'error', [], msg)
     return NextResponse.json({ error: msg }, { status: 502 })
   }
 }

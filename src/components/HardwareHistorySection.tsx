@@ -60,7 +60,7 @@ function fmtTime(iso: string) {
   return `${yyyy}/${mm}/${dd} ${hh}:${min}`
 }
 
-export default function HardwareHistorySection({ deviceId }: { deviceId: number }) {
+export default function HardwareHistorySection({ deviceId, refreshKey }: { deviceId: number; refreshKey?: number }) {
   const [history, setHistory] = useState<HardwareHistory[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -68,7 +68,7 @@ export default function HardwareHistorySection({ deviceId }: { deviceId: number 
     fetch(`/api/devices/${deviceId}/hardware-history`)
       .then(r => r.json())
       .then(data => { setHistory(data); setLoading(false) })
-  }, [deviceId])
+  }, [deviceId, refreshKey])
 
   function handleNotesSaved(id: number, notes: string) {
     setHistory(h => h.map(r => r.id === id ? { ...r, notes } : r))

@@ -9,8 +9,10 @@ import ReservationSection from '@/components/ReservationSection'
 import IncidentSection from '@/components/IncidentSection'
 import BorrowHistorySection from '@/components/BorrowHistorySection'
 import HardwareHistorySection from '@/components/HardwareHistorySection'
+import SyncLogSection from '@/components/SyncLogSection'
 
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
+type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
 
 function UnipasswordField({ value }: { value: string }) {
   const [show, setShow] = useState(false)
@@ -32,6 +34,9 @@ export default function DeviceDetail() {
   const [ipPing, setIpPing] = useState<PingStatus>('unknown')
   const [bmcPing, setBmcPing] = useState<PingStatus>('unknown')
   const [returning, setReturning] = useState(false)
+  const [syncState, setSyncState] = useState<SyncState>('idle')
+  const [syncError, setSyncError] = useState('')
+  const [syncRefresh, setSyncRefresh] = useState(0)
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/devices/${id}`)
@@ -78,6 +83,26 @@ export default function DeviceDetail() {
     }
     setReturning(false)
     load()
+  }
+
+  async function syncDevice() {
+    if (!device?.bmcIp) return
+    setSyncState('syncing')
+    setSyncError('')
+    try {
+      const res = await fetch(`/api/devices/${id}/sync`, { method: 'POST' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || '失敗')
+      }
+      setSyncState('ok')
+      setTimeout(() => setSyncState('idle'), 3000)
+      setSyncRefresh(r => r + 1)
+      load()
+    } catch (err) {
+      setSyncState('error')
+      setSyncError(err instanceof Error ? err.message : '失敗')
+    }
   }
 
   async function deleteDevice() {
@@ -134,7 +159,26 @@ export default function DeviceDetail() {
         </div>
 
         <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">硬體規格</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">硬體規格</h2>
+            {device.bmcIp && (
+              <div className="flex items-center gap-2">
+                {syncState === 'error' && (
+                  <span className="text-xs text-red-500" title={syncError}>✗ {syncError}</span>
+                )}
+                {syncState === 'ok' && (
+                  <span className="text-xs text-green-600">✓ 已更新</span>
+                )}
+                <button
+                  onClick={syncDevice}
+                  disabled={syncState === 'syncing'}
+                  className="px-3 py-1 bg-blue-50 text-blue-700 text-xs rounded border border-blue-200 hover:bg-blue-100 disabled:opacity-50"
+                >
+                  {syncState === 'syncing' ? '抓取中...' : '抓取硬體資訊'}
+                </button>
+              </div>
+            )}
+          </div>
           <dl className="grid grid-cols-2 gap-4">
             {row('CPU', device.cpuInfo)}
             {row('GPU', device.gpuInfo)}
@@ -218,7 +262,11 @@ export default function DeviceDetail() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <HardwareHistorySection deviceId={device.id} />
+        <HardwareHistorySection deviceId={device.id} refreshKey={syncRefresh} />
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <SyncLogSection deviceId={device.id} refreshKey={syncRefresh} />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5">

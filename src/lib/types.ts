@@ -60,6 +60,15 @@ export interface Incident {
   createdAt: string
 }
 
+export interface SyncLog {
+  id: number
+  deviceId: number
+  status: 'success' | 'error'
+  updatedFields: string  // JSON-encoded string[]
+  errorMessage: string
+  createdAt: string
+}
+
 export interface HardwareHistory {
   id: number
   deviceId: number

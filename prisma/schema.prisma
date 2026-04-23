@@ -38,6 +38,7 @@ model Device {
   incidents        Incident[]
   borrowHistory    BorrowHistory[]
   hardwareHistory  HardwareHistory[]
+  syncLogs         SyncLog[]
 }
 
 model StateOption {
@@ -89,4 +90,14 @@ model HardwareHistory {
   source    String   @default("manual")
   notes     String   @default("")
   createdAt DateTime @default(now())
+}
+
+model SyncLog {
+  id            Int      @id @default(autoincrement())
+  deviceId      Int
+  device        Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  status        String   // "success" | "error"
+  updatedFields String   @default("") // JSON array of updated field names
+  errorMessage  String   @default("")
+  createdAt     DateTime @default(now())
 }
