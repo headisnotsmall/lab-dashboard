@@ -16,6 +16,8 @@ export interface Device {
   osStatus: string
   bmcVersion: string
   biosVersion: string
+  pmName: string
+  seName: string
   operator: string
   borrowedBy: string
   borrowedSince: string | null

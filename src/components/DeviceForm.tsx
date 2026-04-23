@@ -13,6 +13,7 @@ const empty = {
   serialNumber: '', bmcMac: '', unipassword: '',
   ip: '', bmcIp: '', osStatus: '', bmcVersion: '', biosVersion: '',
   borrowDescription: '',
+  pmName: '', seName: '',
   operator: '', borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
 }
 
@@ -86,6 +87,8 @@ export default function DeviceForm({ device }: Props) {
             />
           </div>
           {field('位置', 'location', 'text', '例如：Lab A 機架 3')}
+          {field('負責 PM', 'pmName', 'text', '姓名')}
+          {field('負責 SE', 'seName', 'text', '姓名')}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">系統狀態</label>
             <select

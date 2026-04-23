@@ -166,6 +166,8 @@ export default function Dashboard() {
                 <th className="px-4 py-3 font-medium">狀態</th>
                 <th className="px-4 py-3 font-medium">BMC IP</th>
                 <th className="px-4 py-3 font-medium">BMC狀態</th>
+                <th className="px-4 py-3 font-medium">負責 PM</th>
+                <th className="px-4 py-3 font-medium">負責 SE</th>
                 <th className="px-4 py-3 font-medium">操作人員</th>
                 <th className="px-4 py-3 font-medium">借用期限</th>
                 <th className="px-4 py-3 font-medium">使用原因</th>
@@ -174,7 +176,7 @@ export default function Dashboard() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filtered.length === 0 && (
-                <tr><td colSpan={9} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
+                <tr><td colSpan={11} className="px-5 py-10 text-center text-gray-400">尚無設備</td></tr>
               )}
 
               {filtered.map(d => (
@@ -183,8 +185,15 @@ export default function Dashboard() {
                     <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">{d.name}</Link>
                   </td>
                   <td className="px-4 py-3"><StatusBadge state={d.systemState} /></td>
-                  <td className="px-4 py-3 font-mono text-gray-700 text-xs">{d.bmcIp || '—'}</td>
+                  <td className="px-4 py-3">
+                    {d.bmcIp
+                      ? <a href={`http://${d.bmcIp}`} target="_blank" rel="noopener noreferrer" className="font-mono text-blue-600 hover:text-blue-800 text-xs">{d.bmcIp}</a>
+                      : <span className="text-gray-300 text-xs">—</span>
+                    }
+                  </td>
                   <td className="px-4 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
+                  <td className="px-4 py-3 text-gray-600 text-sm">{d.pmName || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600 text-sm">{d.seName || '—'}</td>
                   <td className="px-4 py-3 text-gray-600">{d.operator || '—'}</td>
                   <td className="px-4 py-3"><BorrowUntilCell value={d.borrowUntil ?? null} /></td>
                   <td className="px-4 py-3 text-gray-500 max-w-[180px]">

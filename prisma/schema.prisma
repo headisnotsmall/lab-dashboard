@@ -25,6 +25,8 @@ model Device {
   unipassword   String        @default("")
   bmcVersion    String        @default("")
   biosVersion   String        @default("")
+  pmName        String        @default("")
+  seName        String        @default("")
   operator      String        @default("")
   borrowedBy    String        @default("")
   borrowedSince DateTime?
