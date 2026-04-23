@@ -149,10 +149,11 @@ export default function HardwarePage() {
     setSyncingAll(false)
   }
 
-  const filtered = devices.filter(d =>
-    d.name.toLowerCase().includes(search.toLowerCase()) ||
-    d.location.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = devices.filter(d => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return Object.values(d).some(v => typeof v === 'string' && v.toLowerCase().includes(q))
+  })
 
   return (
     <div className="space-y-4">
