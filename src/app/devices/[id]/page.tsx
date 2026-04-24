@@ -87,10 +87,48 @@ function InlineField({
   )
 }
 
+function InlineStateSelect({ deviceId, value, states, onSaved }: {
+  deviceId: number; value: string; states: string[]; onSaved: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  useEffect(() => { if (editing) selectRef.current?.focus() }, [editing])
+
+  async function save(newVal: string) {
+    await fetch(`/api/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemState: newVal }),
+    })
+    setEditing(false)
+    onSaved()
+  }
+
+  if (editing) return (
+    <select
+      ref={selectRef}
+      defaultValue={value}
+      onChange={e => save(e.target.value)}
+      onBlur={() => setEditing(false)}
+      className="border border-blue-400 rounded px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+    >
+      {states.map(s => <option key={s}>{s}</option>)}
+    </select>
+  )
+
+  return (
+    <span onClick={() => setEditing(true)} className="cursor-pointer" title="點擊編輯狀態">
+      <StatusBadge state={value} />
+    </span>
+  )
+}
+
 export default function DeviceDetail() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [device, setDevice] = useState<Device | null>(null)
+  const [states, setStates] = useState<string[]>([])
   const [ipPing, setIpPing] = useState<PingStatus>('unknown')
   const [bmcPing, setBmcPing] = useState<PingStatus>('unknown')
   const [returning, setReturning] = useState(false)
@@ -99,8 +137,10 @@ export default function DeviceDetail() {
   const [syncRefresh, setSyncRefresh] = useState(0)
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/devices/${id}`)
+    const [res, stateRes] = await Promise.all([fetch(`/api/devices/${id}`), fetch('/api/states')])
     if (res.ok) setDevice(await res.json())
+    const stateData = await stateRes.json()
+    setStates(stateData.map((s: { name: string }) => s.name))
   }, [id])
 
   useEffect(() => { load() }, [load])
@@ -186,7 +226,7 @@ export default function DeviceDetail() {
         <div className="flex items-center gap-3">
           <Link href="/" className="text-gray-400 hover:text-gray-600 text-sm">← 返回</Link>
           <h1 className="text-xl font-bold text-gray-900">{device.name}</h1>
-          <StatusBadge state={device.systemState} />
+          <InlineStateSelect deviceId={device.id} value={device.systemState} states={states} onSaved={load} />
         </div>
         <div className="flex gap-2">
           <Link href={`/devices/${id}/edit`}
@@ -304,6 +344,10 @@ export default function DeviceDetail() {
             <div>
               <dt className="text-xs text-gray-500">借用期限</dt>
               <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowUntil" value={device.borrowUntil} type="date" onSaved={load} /></dd>
+            </div>
+            <div className="col-span-2">
+              <dt className="text-xs text-gray-500">測試說明</dt>
+              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowDescription" value={device.borrowDescription} onSaved={load} /></dd>
             </div>
           </dl>
         </div>

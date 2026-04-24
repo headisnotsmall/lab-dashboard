@@ -155,7 +155,7 @@ export default function Dashboard() {
   const filtered = devices.filter(d => {
     const matchState = filter === '全部' || d.systemState === filter
     const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.operator.toLowerCase().includes(search.toLowerCase()) ||
+      (d.borrowedBy || '').toLowerCase().includes(search.toLowerCase()) ||
       d.bmcIp.includes(search)
     return matchState && matchSearch
   })
@@ -186,7 +186,7 @@ export default function Dashboard() {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="搜尋名稱 / BMC IP / 操作人"
+            placeholder="搜尋名稱 / BMC IP / 借用人"
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-60 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button onClick={pingAll} disabled={pinging || devices.length === 0}
@@ -203,7 +203,7 @@ export default function Dashboard() {
                 <th className="px-4 py-3 font-medium">狀態</th>
                 <th className="px-4 py-3 font-medium">BMC IP</th>
                 <th className="px-4 py-3 font-medium">BMC狀態</th>
-                <th className="px-4 py-3 font-medium">操作人員</th>
+                <th className="px-4 py-3 font-medium">借用人</th>
                 <th className="px-4 py-3 font-medium">借用期限</th>
                 <th className="px-4 py-3 font-medium">使用原因</th>
                 <th className="px-4 py-3 font-medium">後續預約</th>
@@ -227,7 +227,7 @@ export default function Dashboard() {
                     }
                   </td>
                   <td className="px-4 py-3"><PingBadge status={pings[d.id]?.bmc ?? 'unknown'} /></td>
-                  <td className="px-4 py-3 text-gray-600">{d.operator || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{d.borrowedBy || '—'}</td>
                   <td className="px-4 py-3"><BorrowUntilCell value={d.borrowUntil ?? null} /></td>
                   <td className="px-4 py-3 text-gray-500 max-w-[180px]">
                     <span className="block truncate">{d.borrowReason || '—'}</span>
