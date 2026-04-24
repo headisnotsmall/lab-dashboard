@@ -8,6 +8,43 @@ import PingBadge from '@/components/PingBadge'
 type PingStatus = 'unknown' | 'checking' | 'online' | 'offline'
 type PingMap = Record<number, { bmc: PingStatus }>
 
+function InlineStatus({ deviceId, value, states, onSaved }: {
+  deviceId: number; value: string; states: string[]; onSaved: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  useEffect(() => { if (editing) selectRef.current?.focus() }, [editing])
+
+  async function save(newVal: string) {
+    await fetch(`/api/devices/${deviceId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ systemState: newVal }),
+    })
+    setEditing(false)
+    onSaved()
+  }
+
+  if (editing) return (
+    <select
+      ref={selectRef}
+      defaultValue={value}
+      onChange={e => save(e.target.value)}
+      onBlur={() => setEditing(false)}
+      className="border border-blue-400 rounded px-1 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+    >
+      {states.map(s => <option key={s}>{s}</option>)}
+    </select>
+  )
+
+  return (
+    <span onClick={() => setEditing(true)} className="cursor-pointer" title="點擊編輯狀態">
+      <StatusBadge state={value} />
+    </span>
+  )
+}
+
 function InlineLocation({ deviceId, value, onSaved }: { deviceId: number; value: string; onSaved: () => void }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(value)
@@ -182,7 +219,7 @@ export default function Dashboard() {
                   <td className="px-4 py-3">
                     <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap">{d.name}</Link>
                   </td>
-                  <td className="px-4 py-3"><StatusBadge state={d.systemState} /></td>
+                  <td className="px-4 py-3"><InlineStatus deviceId={d.id} value={d.systemState} states={states} onSaved={load} /></td>
                   <td className="px-4 py-3">
                     {d.bmcIp
                       ? <a href={`http://${d.bmcIp}`} target="_blank" rel="noopener noreferrer" className="font-mono text-blue-600 hover:text-blue-800 text-xs">{d.bmcIp}</a>
