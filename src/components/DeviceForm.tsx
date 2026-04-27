@@ -5,6 +5,7 @@ import { Device } from '@/lib/types'
 
 interface Props {
   device?: Device
+  simplified?: boolean
 }
 
 const empty = {
@@ -17,7 +18,7 @@ const empty = {
   operator: '', borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
 }
 
-export default function DeviceForm({ device }: Props) {
+export default function DeviceForm({ device, simplified }: Props) {
   const router = useRouter()
   const [states, setStates] = useState<string[]>([])
   useEffect(() => {
@@ -87,8 +88,8 @@ export default function DeviceForm({ device }: Props) {
             />
           </div>
           {field('位置', 'location', 'text', '例如：Lab A 機架 3')}
-          {field('負責 PM', 'pmName', 'text', '姓名')}
-          {field('負責 SE', 'seName', 'text', '姓名')}
+          {!simplified && field('負責 PM', 'pmName', 'text', '姓名')}
+          {!simplified && field('負責 SE', 'seName', 'text', '姓名')}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">系統狀態</label>
             <select
@@ -99,6 +100,7 @@ export default function DeviceForm({ device }: Props) {
               {states.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
+          {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">備註</label>
             <textarea
@@ -111,50 +113,56 @@ export default function DeviceForm({ device }: Props) {
         </div>
       </section>
 
-      <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-        <h2 className="font-semibold text-gray-900">硬體規格</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {field('CPU', 'cpuInfo', 'text', '例如：Xeon Gold 6348 x2')}
-          {field('RAM', 'ramInfo', 'text', '例如：256GB DDR4')}
-          {field('Storage', 'storageInfo', 'text', '例如：2TB NVMe x4')}
-          {field('GPU', 'gpuInfo', 'text', '例如：H100 80GB x8')}
-          {field('AOC / 擴充卡', 'aocInfo', 'text', '例如：ConnectX-6 100GbE')}
-        </div>
-      </section>
-
-      <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-        <h2 className="font-semibold text-gray-900">網路與韌體</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {field('OS 狀態', 'osStatus', 'text', '例如：Ubuntu 22.04')}
-          {field('IP', 'ip', 'text', '192.168.1.10')}
-          {field('BMC MAC', 'bmcMac', 'text', '例如：AA:BB:CC:DD:EE:FF')}
-          {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
-          {field('BMC 版本', 'bmcVersion', 'text', '例如：2.1.0')}
-          {field('BIOS 版本', 'biosVersion', 'text', '例如：3.4a')}
-          {field('S/N', 'serialNumber', 'text', '序號')}
-          {field('Unipassword', 'unipassword', 'password')}
-        </div>
-      </section>
-
-      <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
-        <h2 className="font-semibold text-gray-900">借用狀態</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {field('當前操作人員', 'operator')}
-          {field('借用人', 'borrowedBy')}
-          {field('借用日期', 'borrowedSince', 'date')}
-          {field('借用期限', 'borrowUntil', 'date')}
-          {field('借用主旨', 'borrowReason', 'text', '例如：效能測試')}
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">細節描述</label>
-            <textarea
-              value={(form as Record<string, unknown>)['borrowDescription'] as string}
-              onChange={e => set('borrowDescription', e.target.value)}
-              rows={2}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+      {!simplified && (
+        <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+          <h2 className="font-semibold text-gray-900">硬體規格</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {field('CPU', 'cpuInfo', 'text', '例如：Xeon Gold 6348 x2')}
+            {field('RAM', 'ramInfo', 'text', '例如：256GB DDR4')}
+            {field('Storage', 'storageInfo', 'text', '例如：2TB NVMe x4')}
+            {field('GPU', 'gpuInfo', 'text', '例如：H100 80GB x8')}
+            {field('AOC / 擴充卡', 'aocInfo', 'text', '例如：ConnectX-6 100GbE')}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {!simplified && (
+        <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+          <h2 className="font-semibold text-gray-900">網路與韌體</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {field('OS 狀態', 'osStatus', 'text', '例如：Ubuntu 22.04')}
+            {field('IP', 'ip', 'text', '192.168.1.10')}
+            {field('BMC MAC', 'bmcMac', 'text', '例如：AA:BB:CC:DD:EE:FF')}
+            {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
+            {field('BMC 版本', 'bmcVersion', 'text', '例如：2.1.0')}
+            {field('BIOS 版本', 'biosVersion', 'text', '例如：3.4a')}
+            {field('S/N', 'serialNumber', 'text', '序號')}
+            {field('Unipassword', 'unipassword', 'password')}
+          </div>
+        </section>
+      )}
+
+      {!simplified && (
+        <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+          <h2 className="font-semibold text-gray-900">借用狀態</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {field('當前操作人員', 'operator')}
+            {field('借用人', 'borrowedBy')}
+            {field('借用日期', 'borrowedSince', 'date')}
+            {field('借用期限', 'borrowUntil', 'date')}
+            {field('借用主旨', 'borrowReason', 'text', '例如：效能測試')}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">細節描述</label>
+              <textarea
+                value={(form as Record<string, unknown>)['borrowDescription'] as string}
+                onChange={e => set('borrowDescription', e.target.value)}
+                rows={2}
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       <div className="flex gap-3">
         <button
