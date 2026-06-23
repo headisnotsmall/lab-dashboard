@@ -174,6 +174,7 @@ export default function DeviceDetail() {
             borrowedSince: new Date().toISOString(),
             borrowUntil: data.nextReservation.toDate,
             borrowReason: data.nextReservation.reason,
+            borrowDescription: data.nextReservation.description,
           }),
         })
         await fetch(`/api/reservations/${data.nextReservation.id}`, { method: 'DELETE' })
@@ -336,15 +337,15 @@ export default function DeviceDetail() {
               <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowedSince" value={device.borrowedSince} type="date" onSaved={load} /></dd>
             </div>
             <div>
+              <dt className="text-xs text-gray-500">借用目的</dt>
+              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowReason" value={device.borrowReason} onSaved={load} /></dd>
+            </div>
+            <div>
               <dt className="text-xs text-gray-500">借用期限</dt>
               <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowUntil" value={device.borrowUntil} type="date" onSaved={load} /></dd>
             </div>
             <div className="col-span-2">
-              <dt className="text-xs text-gray-500">借用主旨</dt>
-              <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowReason" value={device.borrowReason} onSaved={load} /></dd>
-            </div>
-            <div className="col-span-2">
-              <dt className="text-xs text-gray-500">測試說明</dt>
+              <dt className="text-xs text-gray-500">其他說明</dt>
               <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowDescription" value={device.borrowDescription} onSaved={load} /></dd>
             </div>
           </dl>

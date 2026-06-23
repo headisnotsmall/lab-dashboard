@@ -9,7 +9,7 @@ interface Props {
 }
 
 export default function ReservationSection({ deviceId, reservations, onUpdate }: Props) {
-  const [form, setForm] = useState({ borrower: '', fromDate: '', toDate: '', reason: '' })
+  const [form, setForm] = useState({ borrower: '', fromDate: '', toDate: '', reason: '', description: '' })
   const [adding, setAdding] = useState(false)
   const [open, setOpen] = useState(false)
 
@@ -21,7 +21,7 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, deviceId }),
     })
-    setForm({ borrower: '', fromDate: '', toDate: '', reason: '' })
+    setForm({ borrower: '', fromDate: '', toDate: '', reason: '', description: '' })
     setOpen(false)
     setAdding(false)
     onUpdate()
@@ -43,6 +43,7 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
         borrowedSince: new Date().toISOString(),
         borrowUntil: new Date(r.toDate).toISOString(),
         borrowReason: r.reason,
+        borrowDescription: r.description,
       }),
     })
     await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' })
@@ -78,7 +79,7 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
                 className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">原因</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">借用目的</label>
               <input value={form.reason} onChange={e => setForm(f => ({ ...f, reason: e.target.value }))}
                 className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
             </div>
@@ -90,6 +91,12 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">結束日期 *</label>
               <input required type="date" value={form.toDate} onChange={e => setForm(f => ({ ...f, toDate: e.target.value }))}
+                className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
+            </div>
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-700 mb-1">其他說明</label>
+              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                rows={2}
                 className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
             </div>
           </div>

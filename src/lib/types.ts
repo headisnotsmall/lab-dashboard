@@ -49,6 +49,7 @@ export interface Reservation {
   fromDate: string
   toDate: string
   reason: string
+  description: string
   createdAt: string
 }
 

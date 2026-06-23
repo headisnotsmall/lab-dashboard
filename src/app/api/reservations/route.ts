@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
       fromDate: new Date(data.fromDate),
       toDate: new Date(data.toDate),
       reason: data.reason ?? '',
+      description: data.description ?? '',
     },
   })
   return NextResponse.json(reservation, { status: 201 })

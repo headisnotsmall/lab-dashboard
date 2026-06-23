@@ -61,14 +61,15 @@ model BorrowHistory {
 }
 
 model Reservation {
-  id        Int      @id @default(autoincrement())
-  deviceId  Int
-  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  borrower  String
-  fromDate  DateTime
-  toDate    DateTime
-  reason    String   @default("")
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  deviceId    Int
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  borrower    String
+  fromDate    DateTime
+  toDate      DateTime
+  reason      String   @default("")
+  description String   @default("")
+  createdAt   DateTime @default(now())
 }
 
 model Incident {

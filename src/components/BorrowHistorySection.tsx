@@ -33,8 +33,8 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
                 <th className="px-3 py-2 font-medium">借用人</th>
                 <th className="px-3 py-2 font-medium">借用日期</th>
                 <th className="px-3 py-2 font-medium">歸還日期</th>
-                <th className="px-3 py-2 font-medium">原因</th>
-                <th className="px-3 py-2 font-medium">測試說明</th>
+                <th className="px-3 py-2 font-medium">借用目的</th>
+                <th className="px-3 py-2 font-medium">其他說明</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

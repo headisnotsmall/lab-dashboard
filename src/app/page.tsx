@@ -205,7 +205,7 @@ export default function Dashboard() {
                 <th className="px-4 py-3 font-medium">BMC狀態</th>
                 <th className="px-4 py-3 font-medium">借用人</th>
                 <th className="px-4 py-3 font-medium">借用期限</th>
-                <th className="px-4 py-3 font-medium">使用原因</th>
+                <th className="px-4 py-3 font-medium">借用目的</th>
                 <th className="px-4 py-3 font-medium">後續預約</th>
               </tr>
             </thead>

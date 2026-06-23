@@ -148,9 +148,9 @@ export default function DeviceForm({ device, simplified }: Props) {
             {field('借用人', 'borrowedBy')}
             {field('借用日期', 'borrowedSince', 'date')}
             {field('借用期限', 'borrowUntil', 'date')}
-            {field('借用主旨', 'borrowReason', 'text', '例如：效能測試')}
+            {field('借用目的', 'borrowReason', 'text', '例如：效能測試')}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">細節描述</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">其他說明</label>
               <textarea
                 value={(form as Record<string, unknown>)['borrowDescription'] as string}
                 onChange={e => set('borrowDescription', e.target.value)}
