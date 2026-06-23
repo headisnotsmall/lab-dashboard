@@ -31,7 +31,6 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
             <thead>
               <tr className="text-left text-xs text-gray-500 bg-gray-50">
                 <th className="px-3 py-2 font-medium">借用人</th>
-                <th className="px-3 py-2 font-medium">操作人員</th>
                 <th className="px-3 py-2 font-medium">借用日期</th>
                 <th className="px-3 py-2 font-medium">歸還日期</th>
                 <th className="px-3 py-2 font-medium">原因</th>
@@ -41,7 +40,6 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
               {history.map(h => (
                 <tr key={h.id} className="hover:bg-gray-50">
                   <td className="px-3 py-2 text-gray-900">{h.borrower}</td>
-                  <td className="px-3 py-2 text-gray-600">{h.operator || '—'}</td>
                   <td className="px-3 py-2 text-gray-600">{fmt(h.fromDate)}</td>
                   <td className="px-3 py-2 text-gray-600">{fmt(h.toDate)}</td>
                   <td className="px-3 py-2 text-gray-500">{h.reason || '—'}</td>

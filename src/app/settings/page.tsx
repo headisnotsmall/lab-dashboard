@@ -7,6 +7,7 @@ export default function SettingsPage() {
   const [states, setStates] = useState<StateOption[]>([])
   const [newName, setNewName] = useState('')
   const [adding, setAdding] = useState(false)
+  const [error, setError] = useState('')
 
   const load = () => fetch('/api/states').then(r => r.json()).then(setStates)
   useEffect(() => { load() }, [])
@@ -15,19 +16,31 @@ export default function SettingsPage() {
     e.preventDefault()
     if (!newName.trim()) return
     setAdding(true)
-    await fetch('/api/states', {
+    setError('')
+    const res = await fetch('/api/states', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName.trim() }),
     })
-    setNewName('')
     setAdding(false)
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || '新增失敗')
+      return
+    }
+    setNewName('')
     load()
   }
 
   async function remove(id: number, name: string) {
     if (!confirm(`確定刪除狀態「${name}」？`)) return
-    await fetch(`/api/states/${id}`, { method: 'DELETE' })
+    setError('')
+    const res = await fetch(`/api/states/${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error || '刪除失敗')
+      return
+    }
     load()
   }
 
@@ -60,6 +73,8 @@ export default function SettingsPage() {
 
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <h2 className="font-semibold text-gray-900 mb-4">系統狀態選單</h2>
+
+        {error && <div className="bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm mb-4">{error}</div>}
 
         <div className="space-y-2 mb-4">
           {states.map((s, i) => (

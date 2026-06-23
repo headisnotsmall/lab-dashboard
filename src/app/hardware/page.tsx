@@ -14,6 +14,7 @@ const ALL_COLUMNS: { label: string; field: keyof Device }[] = [
   { label: 'BIOS 版本',field: 'biosVersion' },
   { label: 'S/N',      field: 'serialNumber' },
   { label: 'BMC MAC',  field: 'bmcMac' },
+  { label: 'IP',       field: 'ip' },
   { label: 'BMC IP',   field: 'bmcIp' },
   { label: '負責 PM',  field: 'pmName' },
   { label: '負責 SE',  field: 'seName' },

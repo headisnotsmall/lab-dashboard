@@ -54,7 +54,6 @@ model BorrowHistory {
   deviceId  Int
   device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   borrower  String
-  operator  String   @default("")
   fromDate  DateTime?
   toDate    DateTime @default(now())
   reason    String   @default("")

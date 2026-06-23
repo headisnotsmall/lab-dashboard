@@ -36,7 +36,6 @@ export interface BorrowHistory {
   id: number
   deviceId: number
   borrower: string
-  operator: string
   fromDate: string | null
   toDate: string
   reason: string

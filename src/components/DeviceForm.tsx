@@ -133,7 +133,6 @@ export default function DeviceForm({ device, simplified }: Props) {
             {field('OS 狀態', 'osStatus', 'text', '例如：Ubuntu 22.04')}
             {field('IP', 'ip', 'text', '192.168.1.10')}
             {field('BMC MAC', 'bmcMac', 'text', '例如：AA:BB:CC:DD:EE:FF')}
-            {field('BMC IP', 'bmcIp', 'text', '192.168.1.110')}
             {field('BMC 版本', 'bmcVersion', 'text', '例如：2.1.0')}
             {field('BIOS 版本', 'biosVersion', 'text', '例如：3.4a')}
             {field('S/N', 'serialNumber', 'text', '序號')}

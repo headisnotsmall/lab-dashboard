@@ -11,7 +11,6 @@ export async function POST(_: NextRequest, { params }: { params: { id: string } 
       data: {
         deviceId,
         borrower: device.borrowedBy,
-        operator: device.operator,
         fromDate: device.borrowedSince,
         toDate: new Date(),
         reason: device.borrowReason,
