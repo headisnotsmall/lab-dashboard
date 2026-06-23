@@ -53,8 +53,7 @@ function InlineField({
   }
 
   async function save() {
-    let sendVal: string | null = val || null
-    if (type === 'date' && val) sendVal = new Date(val).toISOString()
+    const sendVal: string | null = type === 'date' ? (val ? new Date(val).toISOString() : null) : val
     await fetch(`/api/devices/${deviceId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -175,7 +174,6 @@ export default function DeviceDetail() {
             borrowedSince: new Date().toISOString(),
             borrowUntil: data.nextReservation.toDate,
             borrowReason: data.nextReservation.reason,
-            operator: '',
           }),
         })
         await fetch(`/api/reservations/${data.nextReservation.id}`, { method: 'DELETE' })
@@ -332,10 +330,6 @@ export default function DeviceDetail() {
             <div>
               <dt className="text-xs text-gray-500">借用人</dt>
               <dd className="mt-0.5"><InlineField deviceId={device.id} field="borrowedBy" value={device.borrowedBy} onSaved={load} /></dd>
-            </div>
-            <div>
-              <dt className="text-xs text-gray-500">操作人員</dt>
-              <dd className="mt-0.5"><InlineField deviceId={device.id} field="operator" value={device.operator} onSaved={load} /></dd>
             </div>
             <div>
               <dt className="text-xs text-gray-500">借用日期</dt>

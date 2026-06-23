@@ -34,6 +34,7 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
                 <th className="px-3 py-2 font-medium">借用日期</th>
                 <th className="px-3 py-2 font-medium">歸還日期</th>
                 <th className="px-3 py-2 font-medium">原因</th>
+                <th className="px-3 py-2 font-medium">測試說明</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -43,6 +44,7 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
                   <td className="px-3 py-2 text-gray-600">{fmt(h.fromDate)}</td>
                   <td className="px-3 py-2 text-gray-600">{fmt(h.toDate)}</td>
                   <td className="px-3 py-2 text-gray-500">{h.reason || '—'}</td>
+                  <td className="px-3 py-2 text-gray-500">{h.description || '—'}</td>
                 </tr>
               ))}
             </tbody>

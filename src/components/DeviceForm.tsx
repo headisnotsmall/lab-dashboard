@@ -15,7 +15,7 @@ const empty = {
   ip: '', bmcIp: '', osStatus: '', bmcVersion: '', biosVersion: '',
   borrowDescription: '',
   pmName: '', seName: '',
-  operator: '', borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
+  borrowedBy: '', borrowedSince: '', borrowUntil: '', borrowReason: '', notes: '',
 }
 
 export default function DeviceForm({ device, simplified }: Props) {
@@ -145,7 +145,6 @@ export default function DeviceForm({ device, simplified }: Props) {
         <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">借用狀態</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {field('當前操作人員', 'operator')}
             {field('借用人', 'borrowedBy')}
             {field('借用日期', 'borrowedSince', 'date')}
             {field('借用期限', 'borrowUntil', 'date')}

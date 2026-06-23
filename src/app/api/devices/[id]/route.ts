@@ -54,7 +54,6 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     biosVersion: data.biosVersion,
     pmName: data.pmName,
     seName: data.seName,
-    operator: data.operator,
     borrowedBy: data.borrowedBy,
     borrowedSince: data.borrowedSince ? new Date(data.borrowedSince) : null,
     borrowUntil: data.borrowUntil ? new Date(data.borrowUntil) : null,

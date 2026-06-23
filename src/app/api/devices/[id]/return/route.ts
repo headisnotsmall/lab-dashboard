@@ -14,6 +14,7 @@ export async function POST(_: NextRequest, { params }: { params: { id: string } 
         fromDate: device.borrowedSince,
         toDate: new Date(),
         reason: device.borrowReason,
+        description: device.borrowDescription,
       },
     })
   }
@@ -25,7 +26,7 @@ export async function POST(_: NextRequest, { params }: { params: { id: string } 
       borrowedSince: null,
       borrowUntil: null,
       borrowReason: '',
-      operator: '',
+      borrowDescription: '',
     },
   })
 

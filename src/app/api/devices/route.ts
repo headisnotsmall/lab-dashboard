@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       osStatus: data.osStatus ?? '',
       bmcVersion: data.bmcVersion ?? '',
       biosVersion: data.biosVersion ?? '',
-      operator: data.operator ?? '',
       borrowedBy: data.borrowedBy ?? '',
       borrowedSince: data.borrowedSince ? new Date(data.borrowedSince) : null,
       borrowUntil: data.borrowUntil ? new Date(data.borrowUntil) : null,

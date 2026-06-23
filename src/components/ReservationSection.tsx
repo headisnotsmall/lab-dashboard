@@ -43,7 +43,6 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
         borrowedSince: new Date().toISOString(),
         borrowUntil: new Date(r.toDate).toISOString(),
         borrowReason: r.reason,
-        operator: '',
       }),
     })
     await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' })

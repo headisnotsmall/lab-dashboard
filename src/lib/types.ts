@@ -18,7 +18,6 @@ export interface Device {
   biosVersion: string
   pmName: string
   seName: string
-  operator: string
   borrowedBy: string
   borrowedSince: string | null
   borrowUntil: string | null
@@ -39,6 +38,7 @@ export interface BorrowHistory {
   fromDate: string | null
   toDate: string
   reason: string
+  description: string
   createdAt: string
 }
 

@@ -27,7 +27,6 @@ model Device {
   biosVersion   String        @default("")
   pmName        String        @default("")
   seName        String        @default("")
-  operator      String        @default("")
   borrowedBy    String        @default("")
   borrowedSince DateTime?
   borrowUntil   DateTime?
@@ -50,14 +49,15 @@ model StateOption {
 }
 
 model BorrowHistory {
-  id        Int      @id @default(autoincrement())
-  deviceId  Int
-  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  borrower  String
-  fromDate  DateTime?
-  toDate    DateTime @default(now())
-  reason    String   @default("")
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  deviceId    Int
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  borrower    String
+  fromDate    DateTime?
+  toDate      DateTime @default(now())
+  reason      String   @default("")
+  description String   @default("")
+  createdAt   DateTime @default(now())
 }
 
 model Reservation {
