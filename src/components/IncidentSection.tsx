@@ -1,6 +1,14 @@
 'use client'
 import { useState } from 'react'
 import { Incident } from '@/lib/types'
+import { fmtDateTime } from '@/lib/format'
+
+// datetime-local 是「本地時間」字串，server 在 Docker 裡是 UTC，所以送出前先轉成 ISO
+const localToIso = (v: string) => v ? new Date(v).toISOString() : ''
+const isoToLocal = (v: string) => {
+  const d = new Date(v)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+}
 
 interface Props {
   deviceId: number
@@ -8,13 +16,6 @@ interface Props {
   onUpdate: () => void
 }
 
-const fmt = (d: string) => {
-  const date = new Date(d)
-  const yyyy = date.getFullYear()
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const dd = String(date.getDate()).padStart(2, '0')
-  return `${yyyy}/${mm}/${dd}`
-}
 
 export default function IncidentSection({ deviceId, incidents, onUpdate }: Props) {
   const [form, setForm] = useState({ title: '', description: '', occurredAt: '' })
@@ -29,7 +30,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
     await fetch('/api/incidents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, deviceId }),
+      body: JSON.stringify({ ...form, occurredAt: localToIso(form.occurredAt), deviceId }),
     })
     setForm({ title: '', description: '', occurredAt: '' })
     setOpen(false)
@@ -42,7 +43,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
     setEditForm({
       title: inc.title,
       description: inc.description,
-      occurredAt: inc.occurredAt ? new Date(inc.occurredAt).toISOString().slice(0, 16) : '',
+      occurredAt: inc.occurredAt ? isoToLocal(inc.occurredAt) : '',
     })
   }
 
@@ -50,7 +51,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
     await fetch(`/api/incidents/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editForm),
+      body: JSON.stringify({ ...editForm, occurredAt: localToIso(editForm.occurredAt) }),
     })
     setEditingId(null)
     onUpdate()
@@ -64,8 +65,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-900">事件記錄</h3>
+      <div className="flex items-center justify-end mb-3">
         <button onClick={() => setOpen(!open)} className="text-sm text-blue-600 hover:text-blue-700">
           + 記錄事件
         </button>
@@ -125,7 +125,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
                   <div>
                     <p className="text-sm font-medium text-gray-900">{inc.title}</p>
                     {inc.description && <p className="text-xs text-gray-500 mt-0.5">{inc.description}</p>}
-                    <p className="text-xs text-gray-400 mt-1">{fmt(inc.occurredAt)}</p>
+                    <p className="text-xs text-gray-400 mt-1">{fmtDateTime(inc.occurredAt)}</p>
                   </div>
                   <div className="flex gap-2 ml-2 shrink-0">
                     <button onClick={() => startEdit(inc)} className="text-blue-400 hover:text-blue-600 text-xs">編輯</button>

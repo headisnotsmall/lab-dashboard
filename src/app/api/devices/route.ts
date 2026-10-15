@@ -7,7 +7,7 @@ export async function GET() {
     orderBy: { name: 'asc' },
     include: {
       reservations: {
-        where: { fromDate: { gte: now } },
+        where: { toDate: { gte: now } },
         orderBy: { fromDate: 'asc' },
         take: 1,
       },

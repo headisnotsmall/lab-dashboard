@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import StatusBadge from '@/components/StatusBadge'
 
 interface StateOption { id: number; name: string; order: number }
 
@@ -68,18 +69,19 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-md">
+    <div className="max-w-lg">
       <h1 className="text-xl font-bold text-gray-900 mb-6">設定</h1>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">系統狀態選單</h2>
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+        <h2 className="font-semibold text-gray-900">系統狀態選單</h2>
+        <p className="text-xs text-gray-500 mt-1 mb-4">順序會反映在首頁統計卡與下拉選單</p>
 
         {error && <div className="bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm mb-4">{error}</div>}
 
         <div className="space-y-2 mb-4">
           {states.map((s, i) => (
             <div key={s.id} className="flex items-center justify-between bg-gray-50 rounded-md px-3 py-2">
-              <span className="text-sm text-gray-900">{s.name}</span>
+              <StatusBadge state={s.name} />
               <div className="flex items-center gap-2">
                 <button onClick={() => move(i, 'up')} disabled={i === 0}
                   className="text-gray-400 hover:text-gray-600 disabled:opacity-30 text-xs px-1">↑</button>

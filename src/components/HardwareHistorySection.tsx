@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { HardwareHistory } from '@/lib/types'
+import { fmtDateTime } from '@/lib/format'
 
 const FIELD_LABELS: Record<string, string> = {
   cpuInfo: 'CPU', ramInfo: 'RAM', storageInfo: 'Storage', gpuInfo: 'GPU', aocInfo: 'AOC',
@@ -54,15 +55,6 @@ function NotesCell({ record, onSaved }: { record: HardwareHistory; onSaved: (id:
   )
 }
 
-function fmtTime(iso: string) {
-  const d = new Date(iso)
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const min = String(d.getMinutes()).padStart(2, '0')
-  return `${yyyy}/${mm}/${dd} ${hh}:${min}`
-}
 
 export default function HardwareHistorySection({ deviceId, refreshKey }: { deviceId: number; refreshKey?: number }) {
   const [history, setHistory] = useState<HardwareHistory[]>([])
@@ -87,7 +79,6 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
 
   return (
     <div>
-      <h2 className="font-semibold text-gray-900 mb-4">系統資料更新紀錄</h2>
       {history.length === 0 ? (
         <p className="text-sm text-gray-400">尚無變更紀錄</p>
       ) : (
@@ -107,7 +98,7 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
             <tbody className="divide-y divide-gray-50">
               {history.map(r => (
                 <tr key={r.id} className="hover:bg-gray-50">
-                  <td className="py-2 pr-4 text-xs text-gray-500 whitespace-nowrap">{fmtTime(r.createdAt)}</td>
+                  <td className="py-2 pr-4 text-xs text-gray-500 whitespace-nowrap">{fmtDateTime(r.createdAt)}</td>
                   <td className="py-2 pr-4 text-xs font-medium text-gray-700 whitespace-nowrap">
                     {FIELD_LABELS[r.field] ?? r.field}
                   </td>

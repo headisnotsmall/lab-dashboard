@@ -1,15 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { BorrowHistory } from '@/lib/types'
+import { fmtDate } from '@/lib/format'
 
-const fmt = (d: string | null) => {
-  if (!d) return '—'
-  const date = new Date(d)
-  const yyyy = date.getFullYear()
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const dd = String(date.getDate()).padStart(2, '0')
-  return `${yyyy}/${mm}/${dd}`
-}
 
 export default function BorrowHistorySection({ deviceId }: { deviceId: number }) {
   const [history, setHistory] = useState<BorrowHistory[]>([])
@@ -22,7 +15,6 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
 
   return (
     <div>
-      <h3 className="font-semibold text-gray-900 mb-3">借用紀錄</h3>
       {history.length === 0 ? (
         <p className="text-sm text-gray-400">尚無紀錄</p>
       ) : (
@@ -41,8 +33,8 @@ export default function BorrowHistorySection({ deviceId }: { deviceId: number })
               {history.map(h => (
                 <tr key={h.id} className="hover:bg-gray-50">
                   <td className="px-3 py-2 text-gray-900">{h.borrower}</td>
-                  <td className="px-3 py-2 text-gray-600">{fmt(h.fromDate)}</td>
-                  <td className="px-3 py-2 text-gray-600">{fmt(h.toDate)}</td>
+                  <td className="px-3 py-2 text-gray-600">{fmtDate(h.fromDate)}</td>
+                  <td className="px-3 py-2 text-gray-600">{fmtDate(h.toDate)}</td>
                   <td className="px-3 py-2 text-gray-500">{h.reason || '—'}</td>
                   <td className="px-3 py-2 text-gray-500">{h.description || '—'}</td>
                 </tr>

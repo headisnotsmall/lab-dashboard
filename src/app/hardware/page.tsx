@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
+import { runPool } from '@/lib/api'
 
 const ALL_COLUMNS: { label: string; field: keyof Device }[] = [
   { label: 'CPU',      field: 'cpuInfo' },
@@ -86,7 +87,7 @@ export default function HardwarePage() {
   const [search, setSearch] = useState('')
   const [syncStates, setSyncStates] = useState<Record<number, SyncState>>({})
   const [syncError, setSyncError] = useState<Record<number, string>>({})
-  const [syncingAll, setSyncingAll] = useState(false)
+  const [syncProgress, setSyncProgress] = useState<{ done: number; total: number } | null>(null)
   const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(DEFAULT_FIELDS))
   const [colMenuOpen, setColMenuOpen] = useState(false)
   const colMenuRef = useRef<HTMLDivElement>(null)
@@ -127,6 +128,12 @@ export default function HardwarePage() {
     setDevices(prev => prev.map(d => d.id === deviceId ? { ...d, [field]: val } : d))
   }
 
+  const filtered = devices.filter(d => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return Object.values(d).some(v => typeof v === 'string' && v.toLowerCase().includes(q))
+  })
+
   async function syncDevice(id: number) {
     setSyncStates(s => ({ ...s, [id]: 'syncing' }))
     setSyncError(e => { const n = { ...e }; delete n[id]; return n })
@@ -143,31 +150,31 @@ export default function HardwarePage() {
     }
   }
 
+  // SAA 每台最多跑 120 秒，一次全部打出去容易塞爆，限制同時 4 台
   async function syncAll() {
-    setSyncingAll(true)
-    const hasBmc = devices.filter(d => d.bmcIp)
-    await Promise.all(hasBmc.map(d => syncDevice(d.id)))
-    setSyncingAll(false)
+    const targets = filtered.filter(d => d.bmcIp)
+    if (!confirm(`將透過 SAA 同步 ${targets.length} 台設備，可能需要幾分鐘，確定繼續？`)) return
+    setSyncProgress({ done: 0, total: targets.length })
+    await runPool(targets, 4, async d => {
+      await syncDevice(d.id)
+      setSyncProgress(p => p && { ...p, done: p.done + 1 })
+    })
+    setSyncProgress(null)
   }
 
-  const filtered = devices.filter(d => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return Object.values(d).some(v => typeof v === 'string' && v.toLowerCase().includes(q))
-  })
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-semibold text-gray-900">硬體管理</h1>
+          <h1 className="text-xl font-bold text-gray-900">硬體管理</h1>
           <p className="text-sm text-gray-500 mt-0.5">點擊格子直接編輯，或透過 SAA 自動同步</p>
         </div>
         <div className="flex items-center gap-3">
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="搜尋設備名稱 / 位置"
+            placeholder="搜尋任何欄位"
             className="border border-gray-300 rounded-md px-3 py-1.5 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {/* Column selector */}
@@ -196,19 +203,19 @@ export default function HardwarePage() {
           </div>
           <button
             onClick={syncAll}
-            disabled={syncingAll || devices.every(d => !d.bmcIp)}
+            disabled={!!syncProgress || filtered.every(d => !d.bmcIp)}
             className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
           >
-            {syncingAll ? '同步中...' : '全部同步'}
+            {syncProgress ? `同步中 ${syncProgress.done}/${syncProgress.total}` : search ? '同步篩選結果' : '全部同步'}
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-auto max-h-[calc(100vh-180px)]">
         <table className="text-sm w-full">
           <thead>
-            <tr className="text-left text-xs text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 font-medium sticky left-0 bg-gray-50 z-10 border-r border-gray-200 min-w-[160px]">設備名稱</th>
+            <tr className="text-left text-xs text-gray-500 bg-gray-50 border-b border-gray-200 sticky top-0 z-20">
+              <th className="px-4 py-3 font-medium sticky left-0 bg-gray-50 z-30 border-r border-gray-200 min-w-[160px]">設備名稱</th>
               {COLUMNS.map(c => (
                 <th key={c.field} className="px-4 py-3 font-medium whitespace-nowrap">{c.label}</th>
               ))}

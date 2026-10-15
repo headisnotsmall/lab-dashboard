@@ -59,6 +59,14 @@ SQLite 檔案掛載在 `./data/lab.db`（Docker volume: `./data:/app/data`）。
 - `/hardware` — 硬體管理頁（可搜尋、可選欄位、支援 SAA 同步）
 - `/settings` — 系統狀態選項設定
 
+## 共用元件 / 工具
+
+- `src/lib/format.ts` — 日期格式化（`fmtDate` / `fmtDateTime`）、借用到期判斷（`dueLevel`）
+- `src/lib/api.ts` — `patchDevice()`（失敗會跳提示）、`pingHost()`、`runPool()`（限制併發）
+- `src/components/InlineStatus.tsx` — 點擊切換系統狀態（首頁與詳情頁共用）
+- `StatusBadge` 的顏色：預設狀態在 `constants.ts`，設定頁自訂的狀態依名稱 hash 自動配色
+- Tailwind class 必須寫完整字串，不能動態拼接（否則不會被編進 CSS）
+
 ## SAA 工具
 
 `bin/saa` — Supermicro SAA CLI，透過 BMC IP 撈取硬體資訊（CPU、RAM、GPU、序號等），寫入 `HardwareHistory`（source: `"saa"`）。

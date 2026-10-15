@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Reservation } from '@/lib/types'
+import { fmtDate } from '@/lib/format'
 
 interface Props {
   deviceId: number
@@ -50,18 +51,10 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
     onUpdate()
   }
 
-  const fmt = (d: string) => {
-    const date = new Date(d)
-    const yyyy = date.getFullYear()
-    const mm = String(date.getMonth() + 1).padStart(2, '0')
-    const dd = String(date.getDate()).padStart(2, '0')
-    return `${yyyy}/${mm}/${dd}`
-  }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-semibold text-gray-900">借用排程</h3>
+      <div className="flex items-center justify-end mb-3">
         <button
           onClick={() => setOpen(!open)}
           className="text-sm text-blue-600 hover:text-blue-700"
@@ -121,7 +114,7 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
             <div key={r.id} className="flex items-center justify-between bg-gray-50 rounded-md px-3 py-2">
               <div>
                 <span className="text-sm font-medium text-gray-900">{r.borrower}</span>
-                <span className="text-xs text-gray-500 ml-2">{fmt(r.fromDate)} ~ {fmt(r.toDate)}</span>
+                <span className="text-xs text-gray-500 ml-2">{fmtDate(r.fromDate)} ~ {fmtDate(r.toDate)}</span>
                 {r.reason && <span className="text-xs text-gray-400 ml-2">— {r.reason}</span>}
               </div>
               <div className="flex items-center gap-2">
