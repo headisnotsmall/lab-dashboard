@@ -58,6 +58,8 @@ model BorrowHistory {
   reason      String   @default("")
   description String   @default("")
   createdAt   DateTime @default(now())
+
+  @@index([deviceId])
 }
 
 model Reservation {
@@ -70,6 +72,8 @@ model Reservation {
   reason      String   @default("")
   description String   @default("")
   createdAt   DateTime @default(now())
+
+  @@index([deviceId])
 }
 
 model Incident {
@@ -80,6 +84,8 @@ model Incident {
   description String   @default("")
   occurredAt  DateTime @default(now())
   createdAt   DateTime @default(now())
+
+  @@index([deviceId])
 }
 
 model HardwareHistory {
@@ -93,6 +99,8 @@ model HardwareHistory {
   operator  String   @default("")
   notes     String   @default("")
   createdAt DateTime @default(now())
+
+  @@index([deviceId])
 }
 
 model SyncLog {
@@ -104,6 +112,8 @@ model SyncLog {
   updatedFields String   @default("") // JSON array of updated field names
   errorMessage  String   @default("")
   createdAt     DateTime @default(now())
+
+  @@index([deviceId, createdAt])
 }
 
 // 操作紀錄：誰在什麼時候做了什麼。不建 relation，設備刪掉後紀錄仍保留

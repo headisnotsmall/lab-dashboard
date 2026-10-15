@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Device } from '@/lib/types'
 import { apiFetch } from '@/lib/api'
+import { BORROWER_LIST_ID } from '@/components/BorrowerOptions'
 
 interface Props {
   device?: Device
@@ -58,11 +59,12 @@ export default function DeviceForm({ device, simplified }: Props) {
     }
   }
 
-  const field = (label: string, key: string, type = 'text', placeholder = '') => (
+  const field = (label: string, key: string, type = 'text', placeholder = '', list?: string) => (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
       <input
         type={type}
+        list={list}
         value={(form as Record<string, unknown>)[key] as string}
         onChange={e => set(key, e.target.value)}
         placeholder={placeholder}
@@ -146,7 +148,7 @@ export default function DeviceForm({ device, simplified }: Props) {
         <section className="bg-surface rounded-lg border border-gray-200 p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">借用狀態</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {field('借用人', 'borrowedBy')}
+            {field('借用人', 'borrowedBy', 'text', '', BORROWER_LIST_ID)}
             {field('借用日期', 'borrowedSince', 'date')}
             {field('借用期限', 'borrowUntil', 'date')}
             {field('借用目的', 'borrowReason', 'text', '例如：效能測試')}

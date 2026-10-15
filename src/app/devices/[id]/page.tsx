@@ -14,6 +14,7 @@ import BorrowHistorySection from '@/components/BorrowHistorySection'
 import HardwareHistorySection from '@/components/HardwareHistorySection'
 import SyncLogSection from '@/components/SyncLogSection'
 import AuditLogList from '@/components/AuditLogList'
+import { BORROWER_LIST_ID } from '@/components/BorrowerOptions'
 
 type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
 type Tab = 'reservations' | 'borrow' | 'incidents' | 'hardware' | 'sync' | 'audit'
@@ -33,9 +34,9 @@ function UnipasswordField({ value }: { value: string }) {
 }
 
 function InlineField({
-  deviceId, field, value, type = 'text', mono, placeholder, onSaved,
+  deviceId, field, value, type = 'text', mono, placeholder, list, onSaved,
 }: {
-  deviceId: number; field: string; value: string | null; type?: 'text' | 'date'; mono?: boolean; placeholder?: string; onSaved: () => void
+  deviceId: number; field: string; value: string | null; type?: 'text' | 'date'; mono?: boolean; placeholder?: string; list?: string; onSaved: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState('')
@@ -60,6 +61,7 @@ function InlineField({
     <input
       ref={inputRef}
       type={type}
+      list={list}
       value={val}
       onChange={e => setVal(e.target.value)}
       onBlur={save}
@@ -272,7 +274,7 @@ export default function DeviceDetail() {
           }
         >
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
-            <Field label="借用人"><InlineField deviceId={device.id} field="borrowedBy" value={device.borrowedBy} placeholder="點擊填寫借用人" onSaved={load} /></Field>
+            <Field label="借用人"><InlineField deviceId={device.id} field="borrowedBy" value={device.borrowedBy} placeholder="點擊填寫借用人" list={BORROWER_LIST_ID} onSaved={load} /></Field>
             <Field label="借用目的"><InlineField deviceId={device.id} field="borrowReason" value={device.borrowReason} onSaved={load} /></Field>
             <Field label="借用日期"><InlineField deviceId={device.id} field="borrowedSince" value={device.borrowedSince} type="date" onSaved={load} /></Field>
             <Field label="借用期限"><InlineField deviceId={device.id} field="borrowUntil" value={device.borrowUntil} type="date" onSaved={load} /></Field>

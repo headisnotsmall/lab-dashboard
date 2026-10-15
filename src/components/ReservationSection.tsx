@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Reservation } from '@/lib/types'
 import { fmtDate } from '@/lib/format'
 import { apiFetch } from '@/lib/api'
+import { BORROWER_LIST_ID } from '@/components/BorrowerOptions'
 
 interface Props {
   deviceId: number
@@ -19,11 +20,17 @@ export default function ReservationSection({ deviceId, currentBorrower, reservat
   async function add(e: React.FormEvent) {
     e.preventDefault()
     setAdding(true)
-    await apiFetch('/api/reservations', {
+    const res = await apiFetch('/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, deviceId }),
     })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      alert(body.error || `新增失敗（HTTP ${res.status}）`)
+      setAdding(false)
+      return
+    }
     setForm({ borrower: '', fromDate: '', toDate: '', reason: '', description: '' })
     setOpen(false)
     setAdding(false)
@@ -62,7 +69,7 @@ export default function ReservationSection({ deviceId, currentBorrower, reservat
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">借用人 *</label>
-              <input required value={form.borrower} onChange={e => setForm(f => ({ ...f, borrower: e.target.value }))}
+              <input required list={BORROWER_LIST_ID} value={form.borrower} onChange={e => setForm(f => ({ ...f, borrower: e.target.value }))}
                 className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
             </div>
             <div>
@@ -77,7 +84,7 @@ export default function ReservationSection({ deviceId, currentBorrower, reservat
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">結束日期 *</label>
-              <input required type="date" value={form.toDate} onChange={e => setForm(f => ({ ...f, toDate: e.target.value }))}
+              <input required type="date" min={form.fromDate || undefined} value={form.toDate} onChange={e => setForm(f => ({ ...f, toDate: e.target.value }))}
                 className="w-full border border-gray-300 rounded px-2 py-1.5 text-sm" />
             </div>
             <div className="col-span-2">

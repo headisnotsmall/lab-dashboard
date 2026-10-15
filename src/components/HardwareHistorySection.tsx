@@ -12,6 +12,9 @@ const FIELD_LABELS: Record<string, string> = {
 
 const TRACKED_FIELDS = new Set(Object.keys(FIELD_LABELS))
 
+// redfish 是早期版本用 Redfish API 同步留下的紀錄
+const SOURCE_LABELS: Record<string, string> = { saa: 'SAA', redfish: 'Redfish', manual: '手動' }
+
 function NotesCell({ record, onSaved }: { record: HardwareHistory; onSaved: (id: number, notes: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [val, setVal] = useState(record.notes)
@@ -113,11 +116,11 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
                   </td>
                   <td className="py-2 pr-4">
                     <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                      r.source === 'saa'
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'bg-gray-100 text-gray-600'
+                      r.source === 'manual'
+                        ? 'bg-gray-100 text-gray-600'
+                        : 'bg-blue-50 text-blue-700'
                     }`}>
-                      {r.source === 'saa' ? 'SAA' : '手動'}
+                      {SOURCE_LABELS[r.source] ?? r.source}
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-xs text-gray-600 whitespace-nowrap">{r.operator || <span className="text-gray-300">—</span>}</td>

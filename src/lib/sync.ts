@@ -10,14 +10,46 @@ export type SyncSource = 'manual' | 'auto'
 const execFileAsync = promisify(execFile)
 const SAA_PATH = '/app/bin/saa'
 
-async function runSaa(bmcIp: string, command: string): Promise<string> {
-  const { stdout, stderr } = await execFileAsync(
-    SAA_PATH,
-    ['-i', bmcIp, '-u', 'ADMIN', '-p', 'ADMIN', '-c', command],
-    { timeout: 120000 }
-  )
-  if (stderr) console.error(`saa stderr [${command}]:`, stderr)
-  return stdout
+/** 錯誤訊息會寫進 SyncLog 給大家看，不能帶出密碼 */
+function redact(text: string, secrets: string[]) {
+  return secrets.filter(Boolean).reduce((t, sec) => t.split(sec).join('***'), text)
+}
+
+async function runSaa(bmcIp: string, password: string, command: string): Promise<string> {
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      SAA_PATH,
+      ['-i', bmcIp, '-u', 'ADMIN', '-p', password, '-c', command],
+      { timeout: 120000 }
+    )
+    if (stderr) console.error(`saa stderr [${command}]:`, redact(stderr, [password]))
+    return stdout
+  } catch (err) {
+    // execFile 的 message 只有「Command failed: <整串指令>」，真正原因在 stdout/stderr
+    const e = err as { killed?: boolean; code?: unknown; stdout?: string; stderr?: string }
+    const detail = (e.stderr || e.stdout || '').trim().split('\n').filter(Boolean).slice(-3).join(' / ')
+    const reason = e.killed ? '逾時（120 秒）'
+      : e.code === 'ENOENT' ? `找不到 SAA 執行檔（${SAA_PATH}）`
+      : detail || `exit code ${e.code ?? '?'}`
+    throw new Error(redact(`SAA ${command} 失敗：${reason}`, [password]))
+  }
+}
+
+/**
+ * 先用預設 ADMIN/ADMIN，失敗且設備有 Unipassword（Supermicro BMC 出廠唯一密碼）時再試一次。
+ * 回傳能用的密碼，後續指令沿用。
+ */
+async function runSaaWithFallback(device: Device, command: string): Promise<{ out: string; password: string }> {
+  const candidates = Array.from(new Set(['ADMIN', device.unipassword].filter(Boolean)))
+  let lastErr: unknown
+  for (const password of candidates) {
+    try {
+      return { out: await runSaa(device.bmcIp, password, command), password }
+    } catch (err) {
+      lastErr = err
+    }
+  }
+  throw lastErr
 }
 
 function parseCpu(output: string): string {
@@ -138,9 +170,9 @@ export async function syncDevice(device: Device, opts: { source: SyncSource; ope
   if (!device.bmcIp) throw new Error('此設備沒有設定 BMC IP')
   try {
     // 循序執行，避免同時打爆 BMC
-    const assetOut = await runSaa(device.bmcIp, 'checkassetinfo')
-    const sysOut   = await runSaa(device.bmcIp, 'getsysteminfo')
-    const gpuOut   = await runSaa(device.bmcIp, 'GetGPUInfo').catch(() => '')
+    const { out: assetOut, password } = await runSaaWithFallback(device, 'checkassetinfo')
+    const sysOut   = await runSaa(device.bmcIp, password, 'getsysteminfo')
+    const gpuOut   = await runSaa(device.bmcIp, password, 'GetGPUInfo').catch(() => '')
 
     const updates: Record<string, string> = {}
 
@@ -162,10 +194,13 @@ export async function syncDevice(device: Device, opts: { source: SyncSource; ope
 
     await logHardwareChanges(device.id, device as Record<string, unknown>, updates, 'saa', opts.operator ?? '')
     await prisma.device.update({ where: { id: device.id }, data: updates })
-    await writeSyncLog(device.id, 'success', Object.keys(updates), '', opts.source)
+    // 只記真的有變的欄位，不然每次都列同樣 6 個欄位看不出差別
+    const old = device as unknown as Record<string, unknown>
+    const changed = Object.keys(updates).filter(k => updates[k] !== String(old[k] ?? ''))
+    await writeSyncLog(device.id, 'success', changed, '', opts.source)
     return updates
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Unknown error'
+    const msg = redact(err instanceof Error ? err.message : 'Unknown error', [device.unipassword])
     await writeSyncLog(device.id, 'error', [], msg, opts.source)
     throw new Error(msg)
   }

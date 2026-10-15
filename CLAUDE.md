@@ -56,6 +56,7 @@ SQLite 檔案掛載在 `./data/lab.db`（Docker volume: `./data:/app/data`）。
 | `/api/auto-sync` | GET 自動同步狀態 / POST 立即執行一輪 |
 | `/api/audit` | 操作紀錄查詢（`?deviceId=`、`?operator=`） |
 | `/api/operators` | 曾出現過的操作者名字 |
+| `/api/borrowers` | 曾出現過的借用人名字（依次數排序），layout 裡的 `<BorrowerOptions>` datalist 使用 |
 
 ## 頁面結構
 
@@ -101,6 +102,9 @@ Device 新增欄位時要同步加到 `DEVICE_STRING_FIELDS` / `DEVICE_DATE_FIEL
 ## SAA 工具
 
 `bin/saa` — Supermicro SAA CLI，透過 BMC IP 撈取硬體資訊（CPU、RAM、GPU、序號等），寫入 `HardwareHistory`（source: `"saa"`）。
+
+SAA 先用 `ADMIN/ADMIN`，失敗且設備有 Unipassword 時改用 Unipassword 重試。錯誤訊息取 SAA 的 stdout/stderr 末幾行，
+寫入 SyncLog 前會遮掉密碼。成功時 `updatedFields` 只記真正有變動的欄位。
 
 ## 硬體變更追蹤
 
