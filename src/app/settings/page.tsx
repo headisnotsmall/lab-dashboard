@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import StatusBadge from '@/components/StatusBadge'
+import AutoSyncPanel from '@/components/AutoSyncPanel'
+import { apiFetch } from '@/lib/api'
 
 interface StateOption { id: number; name: string; order: number }
 
@@ -10,7 +12,7 @@ export default function SettingsPage() {
   const [adding, setAdding] = useState(false)
   const [error, setError] = useState('')
 
-  const load = () => fetch('/api/states').then(r => r.json()).then(setStates)
+  const load = () => apiFetch('/api/states').then(r => r.json()).then(setStates)
   useEffect(() => { load() }, [])
 
   async function add(e: React.FormEvent) {
@@ -18,7 +20,7 @@ export default function SettingsPage() {
     if (!newName.trim()) return
     setAdding(true)
     setError('')
-    const res = await fetch('/api/states', {
+    const res = await apiFetch('/api/states', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newName.trim() }),
@@ -36,7 +38,7 @@ export default function SettingsPage() {
   async function remove(id: number, name: string) {
     if (!confirm(`確定刪除狀態「${name}」？`)) return
     setError('')
-    const res = await fetch(`/api/states/${id}`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/states/${id}`, { method: 'DELETE' })
     if (!res.ok) {
       const data = await res.json()
       setError(data.error || '刪除失敗')
@@ -54,12 +56,12 @@ export default function SettingsPage() {
     const bOrder = next[swap].order
 
     await Promise.all([
-      fetch(`/api/states/${next[index].id}`, {
+      apiFetch(`/api/states/${next[index].id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order: bOrder }),
       }),
-      fetch(`/api/states/${next[swap].id}`, {
+      apiFetch(`/api/states/${next[swap].id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order: aOrder }),
@@ -69,10 +71,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-lg">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">設定</h1>
+    <div className="max-w-lg space-y-5">
+      <h1 className="text-xl font-bold text-gray-900">設定</h1>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-5">
+      <AutoSyncPanel />
+
+      <div className="bg-surface rounded-lg border border-gray-200 shadow-sm p-5">
         <h2 className="font-semibold text-gray-900">系統狀態選單</h2>
         <p className="text-xs text-gray-500 mt-1 mb-4">順序會反映在首頁統計卡與下拉選單</p>
 

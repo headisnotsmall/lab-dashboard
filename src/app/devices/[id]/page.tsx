@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
 import { fmtDate, dueLevel, daysUntil } from '@/lib/format'
-import { patchDevice, pingHost } from '@/lib/api'
+import { apiFetch, patchDevice, pingHost } from '@/lib/api'
 import InlineStatus from '@/components/InlineStatus'
 import PingBadge, { PingStatus } from '@/components/PingBadge'
 import CopyButton from '@/components/CopyButton'
@@ -13,9 +13,10 @@ import IncidentSection from '@/components/IncidentSection'
 import BorrowHistorySection from '@/components/BorrowHistorySection'
 import HardwareHistorySection from '@/components/HardwareHistorySection'
 import SyncLogSection from '@/components/SyncLogSection'
+import AuditLogList from '@/components/AuditLogList'
 
 type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
-type Tab = 'reservations' | 'borrow' | 'incidents' | 'hardware' | 'sync'
+type Tab = 'reservations' | 'borrow' | 'incidents' | 'hardware' | 'sync' | 'audit'
 
 function UnipasswordField({ value }: { value: string }) {
   const [show, setShow] = useState(false)
@@ -96,7 +97,7 @@ function Card({ title, actions, children, className = '' }: {
   title: string; actions?: React.ReactNode; children: React.ReactNode; className?: string
 }) {
   return (
-    <section className={`bg-white rounded-lg border border-gray-200 shadow-sm p-5 ${className}`}>
+    <section className={`bg-surface rounded-lg border border-gray-200 shadow-sm p-5 ${className}`}>
       <div className="flex items-center justify-between mb-4 min-h-[28px]">
         <h2 className="font-semibold text-gray-900">{title}</h2>
         {actions}
@@ -121,10 +122,11 @@ export default function DeviceDetail() {
   const [syncError, setSyncError] = useState('')
   const [syncRefresh, setSyncRefresh] = useState(0)
   const [tab, setTab] = useState<Tab>('reservations')
+  const [auditRefresh, setAuditRefresh] = useState(0)
 
   const load = useCallback(async () => {
-    const [res, stateRes] = await Promise.all([fetch(`/api/devices/${id}`), fetch('/api/states')])
-    if (res.ok) setDevice(await res.json())
+    const [res, stateRes] = await Promise.all([apiFetch(`/api/devices/${id}`), apiFetch('/api/states')])
+    if (res.ok) { setDevice(await res.json()); setAuditRefresh(r => r + 1) }
     else if (res.status === 404) setNotFound(true)
     const stateData = await stateRes.json()
     setStates(stateData.map((s: { name: string }) => s.name))
@@ -150,21 +152,16 @@ export default function DeviceDetail() {
   async function returnDevice() {
     if (!confirm('確定歸還此設備？借用資訊將存入紀錄並清空。')) return
     setReturning(true)
-    const res = await fetch(`/api/devices/${id}/return`, { method: 'POST' })
+    const res = await apiFetch(`/api/devices/${id}/return`, { method: 'POST' })
     const data = await res.json()
+    if (!res.ok) { alert(data.error || '歸還失敗'); setReturning(false); return }
     if (data.nextReservation) {
       const activate = confirm(
         `排程中有待接手的預約：${data.nextReservation.borrower}（${fmtDate(data.nextReservation.fromDate)}）\n是否立即設為當前借用人？`
       )
       if (activate) {
-        await patchDevice(Number(id), {
-          borrowedBy: data.nextReservation.borrower,
-          borrowedSince: new Date().toISOString(),
-          borrowUntil: data.nextReservation.toDate,
-          borrowReason: data.nextReservation.reason,
-          borrowDescription: data.nextReservation.description,
-        })
-        await fetch(`/api/reservations/${data.nextReservation.id}`, { method: 'DELETE' })
+        const r = await apiFetch(`/api/reservations/${data.nextReservation.id}/activate`, { method: 'POST' })
+        if (!r.ok) alert((await r.json().catch(() => ({}))).error || '推送失敗')
       }
     }
     setReturning(false)
@@ -176,7 +173,7 @@ export default function DeviceDetail() {
     setSyncState('syncing')
     setSyncError('')
     try {
-      const res = await fetch(`/api/devices/${id}/sync`, { method: 'POST' })
+      const res = await apiFetch(`/api/devices/${id}/sync`, { method: 'POST' })
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || '失敗')
@@ -194,7 +191,7 @@ export default function DeviceDetail() {
 
   async function deleteDevice() {
     if (!confirm(`確定刪除 ${device?.name}？此操作無法復原。`)) return
-    await fetch(`/api/devices/${id}`, { method: 'DELETE' })
+    await apiFetch(`/api/devices/${id}`, { method: 'DELETE' })
     router.push('/')
   }
 
@@ -216,6 +213,7 @@ export default function DeviceDetail() {
     { key: 'incidents', label: '事件記錄', count: incidents.length },
     { key: 'hardware', label: '系統資料更新紀錄' },
     { key: 'sync', label: '抓取紀錄' },
+    { key: 'audit', label: '操作紀錄' },
   ]
 
   return (
@@ -224,25 +222,25 @@ export default function DeviceDetail() {
         <Link href="/" className="text-gray-400 hover:text-gray-600 text-sm">← 設備總覽</Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-900">{device.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-all">{device.name}</h1>
             <InlineStatus deviceId={device.id} value={device.systemState} states={states} onSaved={load} />
             {device.location && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">📍 {device.location}</span>
             )}
             {device.bmcIp && (
               <a href={`http://${device.bmcIp}`} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-gray-600 border border-gray-200 bg-white px-2 py-0.5 rounded hover:border-blue-300 hover:text-blue-700">
+                className="inline-flex items-center gap-1.5 text-xs text-gray-600 border border-gray-200 bg-surface px-2 py-0.5 rounded hover:border-blue-300 hover:text-blue-700">
                 BMC 管理頁 ↗
               </a>
             )}
           </div>
           <div className="flex gap-2">
             <Link href={`/devices/${id}/edit`}
-              className="px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
+              className="px-3 py-1.5 bg-surface text-gray-700 text-sm rounded-md border border-gray-300 hover:bg-gray-50">
               編輯
             </Link>
             <button onClick={deleteDevice}
-              className="px-3 py-1.5 bg-white text-red-600 text-sm rounded-md border border-red-200 hover:bg-red-50">
+              className="px-3 py-1.5 bg-surface text-red-600 text-sm rounded-md border border-red-200 hover:bg-red-50">
               刪除
             </button>
           </div>
@@ -357,7 +355,7 @@ export default function DeviceDetail() {
         </Card>
       </div>
 
-      <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <section className="bg-surface rounded-lg border border-gray-200 shadow-sm">
         <div className="flex gap-1 px-3 border-b border-gray-200 overflow-x-auto">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -373,11 +371,12 @@ export default function DeviceDetail() {
           ))}
         </div>
         <div className="p-5">
-          {tab === 'reservations' && <ReservationSection deviceId={device.id} reservations={reservations} onUpdate={load} />}
+          {tab === 'reservations' && <ReservationSection deviceId={device.id} currentBorrower={device.borrowedBy} reservations={reservations} onUpdate={load} />}
           {tab === 'borrow' && <BorrowHistorySection deviceId={device.id} />}
           {tab === 'incidents' && <IncidentSection deviceId={device.id} incidents={incidents} onUpdate={load} />}
           {tab === 'hardware' && <HardwareHistorySection deviceId={device.id} refreshKey={syncRefresh} />}
           {tab === 'sync' && <SyncLogSection deviceId={device.id} refreshKey={syncRefresh} />}
+          {tab === 'audit' && <AuditLogList deviceId={device.id} refreshKey={auditRefresh} />}
         </div>
       </section>
     </div>

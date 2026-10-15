@@ -29,6 +29,7 @@ export interface Device {
   nextReservation?: Reservation
   reservations?: Reservation[]
   incidents?: Incident[]
+  syncLogs?: Pick<SyncLog, 'status' | 'source' | 'createdAt' | 'errorMessage'>[]
 }
 
 export interface BorrowHistory {
@@ -65,7 +66,8 @@ export interface Incident {
 export interface SyncLog {
   id: number
   deviceId: number
-  status: 'success' | 'error'
+  status: 'success' | 'error' | 'offline'
+  source: 'manual' | 'auto'
   updatedFields: string  // JSON-encoded string[]
   errorMessage: string
   createdAt: string
@@ -78,6 +80,17 @@ export interface HardwareHistory {
   oldValue: string
   newValue: string
   source: string
+  operator: string
   notes: string
+  createdAt: string
+}
+
+export interface AuditLog {
+  id: number
+  deviceId: number | null
+  deviceName: string
+  operator: string
+  action: string
+  detail: string
   createdAt: string
 }

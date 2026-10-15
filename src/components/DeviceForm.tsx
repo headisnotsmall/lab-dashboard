@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Device } from '@/lib/types'
+import { apiFetch } from '@/lib/api'
 
 interface Props {
   device?: Device
@@ -22,7 +23,7 @@ export default function DeviceForm({ device, simplified }: Props) {
   const router = useRouter()
   const [states, setStates] = useState<string[]>([])
   useEffect(() => {
-    fetch('/api/states').then(r => r.json()).then((data: { name: string }[]) => setStates(data.map(s => s.name)))
+    apiFetch('/api/states').then(r => r.json()).then((data: { name: string }[]) => setStates(data.map(s => s.name)))
   }, [])
 
   const [form, setForm] = useState({
@@ -42,7 +43,7 @@ export default function DeviceForm({ device, simplified }: Props) {
     setError('')
     const url = device ? `/api/devices/${device.id}` : '/api/devices'
     const method = device ? 'PUT' : 'POST'
-    const res = await fetch(url, {
+    const res = await apiFetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, borrowedSince: form.borrowedSince || null, borrowUntil: form.borrowUntil || null }),
@@ -74,7 +75,7 @@ export default function DeviceForm({ device, simplified }: Props) {
     <form onSubmit={submit} className="space-y-6">
       {error && <div className="bg-red-50 text-red-700 px-4 py-3 rounded-md text-sm">{error}</div>}
 
-      <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+      <section className="bg-surface rounded-lg border border-gray-200 p-5 space-y-4">
         <h2 className="font-semibold text-gray-900">基本資訊</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -114,7 +115,7 @@ export default function DeviceForm({ device, simplified }: Props) {
       </section>
 
       {!simplified && (
-        <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+        <section className="bg-surface rounded-lg border border-gray-200 p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">硬體規格</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {field('CPU', 'cpuInfo', 'text', '例如：Xeon Gold 6348 x2')}
@@ -127,7 +128,7 @@ export default function DeviceForm({ device, simplified }: Props) {
       )}
 
       {!simplified && (
-        <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+        <section className="bg-surface rounded-lg border border-gray-200 p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">網路與韌體</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {field('OS 狀態', 'osStatus', 'text', '例如：Ubuntu 22.04')}
@@ -142,7 +143,7 @@ export default function DeviceForm({ device, simplified }: Props) {
       )}
 
       {!simplified && (
-        <section className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+        <section className="bg-surface rounded-lg border border-gray-200 p-5 space-y-4">
           <h2 className="font-semibold text-gray-900">借用狀態</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {field('借用人', 'borrowedBy')}
@@ -173,7 +174,7 @@ export default function DeviceForm({ device, simplified }: Props) {
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50"
+          className="px-4 py-2 bg-surface text-gray-700 text-sm font-medium rounded-md border border-gray-300 hover:bg-gray-50"
         >
           取消
         </button>

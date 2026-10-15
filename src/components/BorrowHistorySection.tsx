@@ -2,13 +2,14 @@
 import { useEffect, useState } from 'react'
 import { BorrowHistory } from '@/lib/types'
 import { fmtDate } from '@/lib/format'
+import { apiFetch } from '@/lib/api'
 
 
 export default function BorrowHistorySection({ deviceId }: { deviceId: number }) {
   const [history, setHistory] = useState<BorrowHistory[]>([])
 
   useEffect(() => {
-    fetch(`/api/borrow-history?deviceId=${deviceId}`)
+    apiFetch(`/api/borrow-history?deviceId=${deviceId}`)
       .then(r => r.json())
       .then(setHistory)
   }, [deviceId])

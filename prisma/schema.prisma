@@ -90,6 +90,7 @@ model HardwareHistory {
   oldValue  String   @default("")
   newValue  String   @default("")
   source    String   @default("manual")
+  operator  String   @default("")
   notes     String   @default("")
   createdAt DateTime @default(now())
 }
@@ -98,8 +99,29 @@ model SyncLog {
   id            Int      @id @default(autoincrement())
   deviceId      Int
   device        Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  status        String   // "success" | "error"
+  status        String   // "success" | "error" | "offline"
+  source        String   @default("manual") // "manual" | "auto"
   updatedFields String   @default("") // JSON array of updated field names
   errorMessage  String   @default("")
   createdAt     DateTime @default(now())
+}
+
+// 操作紀錄：誰在什麼時候做了什麼。不建 relation，設備刪掉後紀錄仍保留
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  deviceId   Int?
+  deviceName String   @default("")
+  operator   String   @default("")
+  action     String
+  detail     String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([deviceId])
+  @@index([createdAt])
+}
+
+// 系統層級的 key/value 設定（例如上次自動同步時間）
+model AppSetting {
+  key   String @id
+  value String
 }

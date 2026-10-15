@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
+import { pickDeviceData } from '@/lib/device-fields'
+import { audit, getOperator } from '@/lib/audit'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const now = new Date()
@@ -11,38 +16,27 @@ export async function GET() {
         orderBy: { fromDate: 'asc' },
         take: 1,
       },
+      syncLogs: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { status: true, source: true, createdAt: true, errorMessage: true },
+      },
     },
   })
   return NextResponse.json(devices)
 }
 
 export async function POST(request: NextRequest) {
-  const data = await request.json()
-  const device = await prisma.device.create({
-    data: {
-      name: data.name,
-      location: data.location ?? '',
-      systemState: data.systemState ?? '閒置',
-      cpuInfo: data.cpuInfo ?? '',
-      ramInfo: data.ramInfo ?? '',
-      storageInfo: data.storageInfo ?? '',
-      gpuInfo: data.gpuInfo ?? '',
-      aocInfo: data.aocInfo ?? '',
-      serialNumber: data.serialNumber ?? '',
-      bmcMac: data.bmcMac ?? '',
-      unipassword: data.unipassword ?? '',
-      ip: data.ip ?? '',
-      bmcIp: data.bmcIp ?? '',
-      osStatus: data.osStatus ?? '',
-      bmcVersion: data.bmcVersion ?? '',
-      biosVersion: data.biosVersion ?? '',
-      borrowedBy: data.borrowedBy ?? '',
-      borrowedSince: data.borrowedSince ? new Date(data.borrowedSince) : null,
-      borrowUntil: data.borrowUntil ? new Date(data.borrowUntil) : null,
-      borrowReason: data.borrowReason ?? '',
-      borrowDescription: data.borrowDescription ?? '',
-      notes: data.notes ?? '',
-    },
-  })
-  return NextResponse.json(device, { status: 201 })
+  const data = pickDeviceData(await request.json())
+  if (!data.name) return NextResponse.json({ error: '名稱不可為空' }, { status: 400 })
+  try {
+    const device = await prisma.device.create({ data: { ...data, name: data.name as string } })
+    await audit({ operator: getOperator(request), action: '新增設備', deviceId: device.id, deviceName: device.name })
+    return NextResponse.json(device, { status: 201 })
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      return NextResponse.json({ error: '設備名稱已存在' }, { status: 400 })
+    }
+    throw err
+  }
 }

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { Incident } from '@/lib/types'
 import { fmtDateTime } from '@/lib/format'
+import { apiFetch } from '@/lib/api'
 
 // datetime-local 是「本地時間」字串，server 在 Docker 裡是 UTC，所以送出前先轉成 ISO
 const localToIso = (v: string) => v ? new Date(v).toISOString() : ''
@@ -27,7 +28,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
   async function add(e: React.FormEvent) {
     e.preventDefault()
     setAdding(true)
-    await fetch('/api/incidents', {
+    await apiFetch('/api/incidents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, occurredAt: localToIso(form.occurredAt), deviceId }),
@@ -48,7 +49,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
   }
 
   async function saveEdit(id: number) {
-    await fetch(`/api/incidents/${id}`, {
+    await apiFetch(`/api/incidents/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...editForm, occurredAt: localToIso(editForm.occurredAt) }),
@@ -59,7 +60,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
 
   async function remove(id: number) {
     if (!confirm('確定刪除此事件？')) return
-    await fetch(`/api/incidents/${id}`, { method: 'DELETE' })
+    await apiFetch(`/api/incidents/${id}`, { method: 'DELETE' })
     onUpdate()
   }
 
@@ -94,7 +95,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
             <button type="submit" disabled={adding}
               className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 disabled:opacity-50">新增</button>
             <button type="button" onClick={() => setOpen(false)}
-              className="px-3 py-1.5 bg-white text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">取消</button>
+              className="px-3 py-1.5 bg-surface text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">取消</button>
           </div>
         </form>
       )}
@@ -117,7 +118,7 @@ export default function IncidentSection({ deviceId, incidents, onUpdate }: Props
                     <button onClick={() => saveEdit(inc.id)}
                       className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">儲存</button>
                     <button onClick={() => setEditingId(null)}
-                      className="px-3 py-1 bg-white text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">取消</button>
+                      className="px-3 py-1 bg-surface text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">取消</button>
                   </div>
                 </div>
               ) : (

@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { HardwareHistory } from '@/lib/types'
 import { fmtDateTime } from '@/lib/format'
+import { apiFetch } from '@/lib/api'
 
 const FIELD_LABELS: Record<string, string> = {
   cpuInfo: 'CPU', ramInfo: 'RAM', storageInfo: 'Storage', gpuInfo: 'GPU', aocInfo: 'AOC',
@@ -20,7 +21,7 @@ function NotesCell({ record, onSaved }: { record: HardwareHistory; onSaved: (id:
 
   async function save() {
     if (val === record.notes) { setEditing(false); return }
-    await fetch(`/api/hardware-history/${record.id}`, {
+    await apiFetch(`/api/hardware-history/${record.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ notes: val }),
@@ -61,7 +62,7 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch(`/api/devices/${deviceId}/hardware-history`)
+    apiFetch(`/api/devices/${deviceId}/hardware-history`)
       .then(r => r.json())
       .then(data => { setHistory(data.filter((r: HardwareHistory) => TRACKED_FIELDS.has(r.field))); setLoading(false) })
   }, [deviceId, refreshKey])
@@ -71,7 +72,8 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
   }
 
   async function handleDelete(id: number) {
-    await fetch(`/api/hardware-history/${id}`, { method: 'DELETE' })
+    if (!confirm('確定刪除這筆紀錄？')) return
+    await apiFetch(`/api/hardware-history/${id}`, { method: 'DELETE' })
     setHistory(h => h.filter(r => r.id !== id))
   }
 
@@ -91,6 +93,7 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
                 <th className="pb-2 font-medium pr-4">變更前</th>
                 <th className="pb-2 font-medium pr-4">變更後</th>
                 <th className="pb-2 font-medium pr-4">來源</th>
+                <th className="pb-2 font-medium pr-4">操作者</th>
                 <th className="pb-2 font-medium pr-4">備註</th>
                 <th className="pb-2 font-medium"></th>
               </tr>
@@ -117,6 +120,7 @@ export default function HardwareHistorySection({ deviceId, refreshKey }: { devic
                       {r.source === 'saa' ? 'SAA' : '手動'}
                     </span>
                   </td>
+                  <td className="py-2 pr-4 text-xs text-gray-600 whitespace-nowrap">{r.operator || <span className="text-gray-300">—</span>}</td>
                   <td className="py-2 pr-4 min-w-[160px]">
                     <NotesCell record={r} onSaved={handleNotesSaved} />
                   </td>

@@ -11,7 +11,8 @@ export async function logHardwareChanges(
   deviceId: number,
   oldValues: Record<string, unknown>,
   newValues: Record<string, unknown>,
-  source: 'manual' | 'saa' = 'manual'
+  source: 'manual' | 'saa' = 'manual',
+  operator = ''
 ) {
   const records = HARDWARE_FIELDS
     .filter(f => newValues[f] !== undefined && String(newValues[f]) !== String(oldValues[f] ?? ''))
@@ -21,6 +22,7 @@ export async function logHardwareChanges(
       oldValue: String(oldValues[f] ?? ''),
       newValue: String(newValues[f]),
       source,
+      operator,
     }))
 
   if (records.length > 0) {

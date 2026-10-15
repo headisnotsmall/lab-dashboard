@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { audit, getOperator } from '@/lib/audit'
 
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   const { order } = await request.json()
   const state = await prisma.stateOption.update({
     where: { id: Number(params.id) },
-    data: { order },
+    data: { order: Number(order) },
   })
   return NextResponse.json(state)
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   const state = await prisma.stateOption.findUnique({ where: { id: Number(params.id) } })
   if (!state) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -23,5 +24,6 @@ export async function DELETE(_: NextRequest, { params }: { params: { id: string 
   }
 
   await prisma.stateOption.delete({ where: { id: Number(params.id) } })
+  await audit({ operator: getOperator(request), action: '刪除狀態選項', detail: state.name })
   return NextResponse.json({ ok: true })
 }

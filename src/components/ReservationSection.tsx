@@ -2,14 +2,16 @@
 import { useState } from 'react'
 import { Reservation } from '@/lib/types'
 import { fmtDate } from '@/lib/format'
+import { apiFetch } from '@/lib/api'
 
 interface Props {
   deviceId: number
+  currentBorrower?: string
   reservations: Reservation[]
   onUpdate: () => void
 }
 
-export default function ReservationSection({ deviceId, reservations, onUpdate }: Props) {
+export default function ReservationSection({ deviceId, currentBorrower, reservations, onUpdate }: Props) {
   const [form, setForm] = useState({ borrower: '', fromDate: '', toDate: '', reason: '', description: '' })
   const [adding, setAdding] = useState(false)
   const [open, setOpen] = useState(false)
@@ -17,7 +19,7 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
   async function add(e: React.FormEvent) {
     e.preventDefault()
     setAdding(true)
-    await fetch('/api/reservations', {
+    await apiFetch('/api/reservations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...form, deviceId }),
@@ -30,27 +32,19 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
 
   async function remove(id: number) {
     if (!confirm('確定刪除此預約？')) return
-    await fetch(`/api/reservations/${id}`, { method: 'DELETE' })
+    await apiFetch(`/api/reservations/${id}`, { method: 'DELETE' })
     onUpdate()
   }
 
   async function activate(r: Reservation) {
-    if (!confirm(`確定將 ${r.borrower} 的預約推送為當前借用狀態？`)) return
-    await fetch(`/api/devices/${deviceId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        borrowedBy: r.borrower,
-        borrowedSince: new Date().toISOString(),
-        borrowUntil: new Date(r.toDate).toISOString(),
-        borrowReason: r.reason,
-        borrowDescription: r.description,
-      }),
-    })
-    await fetch(`/api/reservations/${r.id}`, { method: 'DELETE' })
+    const msg = currentBorrower
+      ? `目前借用人是 ${currentBorrower}，推送後會先把他存入借用紀錄。\n確定將 ${r.borrower} 的預約設為當前借用？`
+      : `確定將 ${r.borrower} 的預約推送為當前借用狀態？`
+    if (!confirm(msg)) return
+    const res = await apiFetch(`/api/reservations/${r.id}/activate`, { method: 'POST' })
+    if (!res.ok) alert((await res.json().catch(() => ({}))).error || '推送失敗')
     onUpdate()
   }
-
 
   return (
     <div>
@@ -99,7 +93,7 @@ export default function ReservationSection({ deviceId, reservations, onUpdate }:
               新增
             </button>
             <button type="button" onClick={() => setOpen(false)}
-              className="px-3 py-1.5 bg-white text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">
+              className="px-3 py-1.5 bg-surface text-gray-700 text-xs rounded border border-gray-300 hover:bg-gray-50">
               取消
             </button>
           </div>

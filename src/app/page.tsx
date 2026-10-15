@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
 import { fmtDate, dueLevel } from '@/lib/format'
-import { patchDevice, pingHost, runPool } from '@/lib/api'
+import { apiFetch, patchDevice, pingHost, runPool } from '@/lib/api'
 import { stateDot } from '@/components/StatusBadge'
 import InlineStatus from '@/components/InlineStatus'
 import PingBadge, { PingStatus } from '@/components/PingBadge'
@@ -73,7 +73,7 @@ function StatCard({ label, count, active, onClick, accent, dot }: {
 }) {
   return (
     <button type="button" onClick={onClick}
-      className={`text-left bg-white rounded-lg border px-4 py-3 min-w-[96px] transition-all ${
+      className={`text-left bg-surface rounded-lg border px-4 py-3 min-w-[96px] transition-all ${
         active ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
       }`}>
       <div className="flex items-center gap-1.5 text-xs text-gray-500">
@@ -97,7 +97,7 @@ export default function Dashboard() {
   const autoPinged = useRef(false)
 
   const load = useCallback(async () => {
-    const [devRes, stateRes] = await Promise.all([fetch('/api/devices'), fetch('/api/states')])
+    const [devRes, stateRes] = await Promise.all([apiFetch('/api/devices'), apiFetch('/api/states')])
     const [devData, stateData] = await Promise.all([devRes.json(), stateRes.json()])
     setDevices(devData)
     setStates(stateData.map((s: { name: string }) => s.name))
@@ -180,7 +180,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3">
         <StatCard label="總計" count={devices.length} active={filter === F_ALL} onClick={() => setFilter(F_ALL)} />
         {states.map(s => (
           <StatCard key={s} label={s} count={counts[s] ?? 0} dot={stateDot(s)}
@@ -192,15 +192,15 @@ export default function Dashboard() {
           accent={dueCount > 0 ? 'text-red-600' : undefined} dot={dueCount > 0 ? 'bg-red-500' : undefined} />
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="bg-surface rounded-lg border border-gray-200 shadow-sm">
         <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center gap-3">
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Escape') setSearch('') }}
               placeholder="搜尋名稱 / BMC IP / 借用人 / 位置"
-              className="border border-gray-300 rounded-md pl-3 pr-7 py-1.5 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-md pl-3 pr-7 py-1.5 text-sm w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {search && (
               <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm">✕</button>
@@ -221,13 +221,57 @@ export default function Dashboard() {
               </span>
             )}
             <button onClick={() => pingAll(devices)} disabled={pinging || devices.length === 0}
-              className="px-3 py-1.5 bg-white text-gray-700 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50">
+              className="px-3 py-1.5 bg-surface text-gray-700 text-sm rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50">
               {pinging ? '檢查中...' : '重新 Ping'}
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* 手機：卡片列表 */}
+        <ul className="md:hidden divide-y divide-gray-100">
+          {sorted.length === 0 && <li className="px-4 py-10 text-center text-gray-400 text-sm">沒有符合的設備</li>}
+          {sorted.map(d => {
+            const level = d.borrowedBy ? dueLevel(d.borrowUntil) : null
+            const next = d.reservations?.[0]
+            return (
+              <li key={d.id} className={`px-4 py-3 border-l-2 ${level === 'overdue' ? 'border-red-400 bg-red-50/40' : level === 'soon' ? 'border-orange-300' : 'border-transparent'}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 break-all">{d.name}</Link>
+                    {d.location && <div className="text-xs text-gray-400">{d.location}</div>}
+                  </div>
+                  <InlineStatus deviceId={d.id} value={d.systemState} states={states} onSaved={load} />
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-gray-400 shrink-0">BMC</span>
+                    {d.bmcIp
+                      ? <><a href={`http://${d.bmcIp}`} target="_blank" rel="noopener noreferrer" className="font-mono text-gray-700 truncate">{d.bmcIp}</a><PingBadge status={pings[d.id] ?? 'unknown'} /></>
+                      : <span className="text-gray-300">—</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-gray-400 shrink-0">借用</span>
+                    <span className="text-gray-700 truncate">{d.borrowedBy || '—'}</span>
+                  </div>
+                  {d.borrowedBy && (
+                    <div className="col-span-2 flex items-center gap-1.5">
+                      <span className="text-gray-400 shrink-0">期限</span>
+                      <BorrowUntilCell value={d.borrowUntil ?? null} />
+                    </div>
+                  )}
+                  {d.borrowReason && <div className="col-span-2 text-gray-500 truncate">{d.borrowReason}</div>}
+                  {next && (
+                    <div className="col-span-2 text-amber-700">
+                      下一位：{next.borrower}（{fmtDate(next.fromDate)} ~ {fmtDate(next.toDate)}）
+                    </div>
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-gray-500 bg-gray-50 border-b border-gray-100">
