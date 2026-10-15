@@ -56,7 +56,8 @@ SQLite 檔案掛載在 `./data/lab.db`（Docker volume: `./data:/app/data`）。
 | `/api/auto-sync` | GET 自動同步狀態 / POST 立即執行一輪 |
 | `/api/audit` | 操作紀錄查詢（`?deviceId=`、`?operator=`） |
 | `/api/operators` | 曾出現過的操作者名字 |
-| `/api/borrowers` | 曾出現過的借用人名字（依次數排序），layout 裡的 `<BorrowerOptions>` datalist 使用 |
+| `/api/borrowers` | 曾出現過的借用人名字（依次數排序），layout 裡的 `<BorrowerOptions>` datalist 使用；`?counts=1` 附次數 |
+| `/api/borrowers/merge` | 合併借用人名字（Device / BorrowHistory / Reservation 一起改） |
 
 ## 頁面結構
 
@@ -65,7 +66,7 @@ SQLite 檔案掛載在 `./data/lab.db`（Docker volume: `./data:/app/data`）。
 - `/devices/[id]` — 設備詳情（借用、預約、事件、硬體紀錄、Sync log）
 - `/hardware` — 硬體管理頁（可搜尋、可選欄位、支援 SAA 同步）
 - `/audit` — 全部操作紀錄
-- `/settings` — 自動同步狀態、系統狀態選項設定
+- `/settings` — 自動同步狀態、系統狀態選項設定、借用人名稱整理
 
 ## 共用元件 / 工具
 
@@ -80,6 +81,12 @@ SQLite 檔案掛載在 `./data/lab.db`（Docker volume: `./data:/app/data`）。
 沒有登入機制。第一次開網頁時填名字（存在 localStorage），前端所有請求都透過 `apiFetch()` 帶
 `X-Operator` header（encodeURIComponent 過）。後端用 `getOperator(req)` 取出，`audit()` 寫入 `AuditLog`。
 新增會修改資料的 API 時，記得呼叫 `audit()`；前端呼叫 API 一律用 `apiFetch`，不要直接用 `fetch`。
+
+### 舊紀錄搬移
+
+AuditLog 出現前，借用人／狀態等欄位變更是寫在 `HardwareHistory`（畫面上被過濾掉）。
+`src/lib/legacy-migration.ts` 在啟動時把它們複製成 AuditLog（operator 為 `（舊紀錄）`，同一台 1 分鐘內合成一筆），
+原始資料不刪，`AppSetting` 的 `migration.legacyHardwareHistory` 旗標確保只跑一次。
 
 ## Device 欄位白名單
 

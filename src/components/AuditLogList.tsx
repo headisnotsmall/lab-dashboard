@@ -10,6 +10,7 @@ const ACTION_STYLES: Record<string, string> = {
   '新增設備': 'bg-green-100 text-green-700',
   '歸還': 'bg-green-100 text-green-700',
   '推送預約': 'bg-blue-100 text-blue-700',
+  '合併借用人': 'bg-amber-100 text-amber-700',
   '自動同步硬體資訊': 'bg-purple-100 text-purple-700',
 }
 

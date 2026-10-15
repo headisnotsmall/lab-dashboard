@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import StatusBadge from '@/components/StatusBadge'
 import AutoSyncPanel from '@/components/AutoSyncPanel'
+import BorrowerMergePanel from '@/components/BorrowerMergePanel'
 import { apiFetch } from '@/lib/api'
 
 interface StateOption { id: number; name: string; order: number }
@@ -111,6 +112,8 @@ export default function SettingsPage() {
           </button>
         </form>
       </div>
+
+      <BorrowerMergePanel />
     </div>
   )
 }
