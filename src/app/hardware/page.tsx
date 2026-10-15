@@ -1,4 +1,5 @@
 'use client'
+import DeviceName from '@/components/DeviceName'
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Device } from '@/lib/types'
@@ -263,7 +264,7 @@ export default function HardwarePage() {
                 <tr key={d.id} className="hover:bg-gray-50 group">
                   <td className="px-4 py-2 sticky left-0 bg-surface group-hover:bg-gray-50 z-10 border-r border-gray-100">
                     <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap text-sm">
-                      {d.name}
+                      <DeviceName name={d.name} />
                     </Link>
                     {d.location && <div className="text-xs text-gray-400 mt-0.5">{d.location}</div>}
                   </td>

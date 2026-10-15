@@ -14,6 +14,7 @@ import BorrowHistorySection from '@/components/BorrowHistorySection'
 import HardwareHistorySection from '@/components/HardwareHistorySection'
 import SyncLogSection from '@/components/SyncLogSection'
 import AuditLogList from '@/components/AuditLogList'
+import DeviceName from '@/components/DeviceName'
 import { BORROWER_LIST_ID } from '@/components/BorrowerOptions'
 
 type SyncState = 'idle' | 'syncing' | 'ok' | 'error'
@@ -224,7 +225,7 @@ export default function DeviceDetail() {
         <Link href="/" className="text-gray-400 hover:text-gray-600 text-sm">← 設備總覽</Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-all">{device.name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 break-all"><DeviceName name={device.name} /></h1>
             <InlineStatus deviceId={device.id} value={device.systemState} states={states} onSaved={load} />
             {device.location && (
               <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">📍 {device.location}</span>

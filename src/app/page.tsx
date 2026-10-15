@@ -8,6 +8,8 @@ import { stateDot } from '@/components/StatusBadge'
 import InlineStatus from '@/components/InlineStatus'
 import PingBadge, { PingStatus } from '@/components/PingBadge'
 import CopyButton from '@/components/CopyButton'
+import DeviceName from '@/components/DeviceName'
+import { splitDeviceName, shortModel } from '@/lib/model'
 
 type PingMap = Record<number, PingStatus>
 type SortKey = 'name' | 'systemState' | 'borrowedBy' | 'borrowUntil'
@@ -89,6 +91,7 @@ export default function Dashboard() {
   const [devices, setDevices] = useState<Device[] | null>(null)
   const [states, setStates] = useState<string[]>([])
   const [filter, setFilter] = useState(F_ALL)
+  const [model, setModel] = useState('')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<{ key: SortKey; asc: boolean }>({ key: 'name', asc: true })
   const [pings, setPings] = useState<PingMap>({})
@@ -135,8 +138,19 @@ export default function Dashboard() {
   const borrowedCount = devices.filter(d => d.borrowedBy).length
   const dueCount = devices.filter(d => d.borrowedBy && dueLevel(d.borrowUntil) && dueLevel(d.borrowUntil) !== 'ok').length
 
+  // 同型號有 2 台以上才出按鈕；一台的型號用搜尋就好
+  const modelCounts = new Map<string, number>()
+  devices.forEach(d => {
+    const m = splitDeviceName(d.name).model
+    modelCounts.set(m, (modelCounts.get(m) ?? 0) + 1)
+  })
+  const models = Array.from(modelCounts.entries())
+    .filter(([, n]) => n > 1)
+    .sort((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true }))
+
   const q = search.trim().toLowerCase()
   const filtered = devices.filter(d => {
+    if (model && splitDeviceName(d.name).model !== model) return false
     const matchFilter =
       filter === F_ALL ? true :
       filter === F_BORROWED ? !!d.borrowedBy :
@@ -227,6 +241,23 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {models.length > 0 && (
+          <div className="px-4 py-2 border-b border-gray-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <span className="text-xs text-gray-400 shrink-0">型號</span>
+            {models.map(([m, n]) => (
+              <button key={m} type="button" title={m} onClick={() => setModel(cur => cur === m ? '' : m)}
+                className={`shrink-0 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                  model === m
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'bg-surface border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                {shortModel(m)}
+                <span className={`tabular-nums ${model === m ? 'text-blue-100' : 'text-gray-400'}`}>{n}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 手機：卡片列表 */}
         <ul className="md:hidden divide-y divide-gray-100">
           {sorted.length === 0 && <li className="px-4 py-10 text-center text-gray-400 text-sm">沒有符合的設備</li>}
@@ -237,7 +268,7 @@ export default function Dashboard() {
               <li key={d.id} className={`px-4 py-3 border-l-2 ${level === 'overdue' ? 'border-red-400 bg-red-50/40' : level === 'soon' ? 'border-orange-300' : 'border-transparent'}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 break-all">{d.name}</Link>
+                    <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 break-all"><DeviceName name={d.name} /></Link>
                     {d.location && <div className="text-xs text-gray-400">{d.location}</div>}
                   </div>
                   <InlineStatus deviceId={d.id} value={d.systemState} states={states} onSaved={load} />
@@ -299,7 +330,7 @@ export default function Dashboard() {
                 return (
                   <tr key={d.id} className={`group hover:bg-gray-50 ${level === 'overdue' ? 'bg-red-50/40' : ''}`}>
                     <td className={`px-4 py-2.5 border-l-2 ${level === 'overdue' ? 'border-red-400' : level === 'soon' ? 'border-orange-300' : 'border-transparent'}`}>
-                      <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap">{d.name}</Link>
+                      <Link href={`/devices/${d.id}`} className="font-medium text-blue-600 hover:text-blue-800 hover:underline whitespace-nowrap"><DeviceName name={d.name} /></Link>
                       <InlineLocation deviceId={d.id} value={d.location} onSaved={load} />
                     </td>
                     <td className="px-4 py-2.5"><InlineStatus deviceId={d.id} value={d.systemState} states={states} onSaved={load} /></td>
